@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="300"
+             x:Class="Encriptor.Views.MainView">
+  <Grid RowDefinitions="* * *"
+        Background="DarkGray"
+        ShowGridLines="True">
+    <StackPanel Grid.Row="0">
+      <TextBlock Text="Исходный текст"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Bottom"
+                 Grid.Column="1"
+                 FontSize="16"
+                 FontWeight="400"
+                 Foreground="Black"
+                 Height="21"
+                 Margin="20 15 0 0"/>
+
+      <TextBox Watermark="..."
+               Margin="20 5 0 0"
+               Width="700"
+               Height="30"
+               HorizontalAlignment="Left"
+               VerticalAlignment="Bottom"
+               Text="{Binding TextToEncrypt}"/>
+    </StackPanel>
+
+    <StackPanel Grid.Row="1">
+      <TextBlock Text="Зашифрованный текст"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Bottom"
+                 Grid.Column="1"
+                 FontSize="16"
+                 FontWeight="400"
+                 Foreground="Black"
+                 Height="21"
+                 Margin="20 15 0 0"/>
+
+      <TextBox Watermark="..."
+               Margin="20 5 0 0"
+               Width="700"
+               Height="30"
+               HorizontalAlignment="Left"
+               VerticalAlignment="Bottom"
+               Text="{Binding EncryptedText}"/>
+    </StackPanel>
+
+    <StackPanel Grid.Row="2">
+      <TextBlock Text="Расшифрованный текст"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Bottom"
+                 Grid.Column="1"
+                 FontSize="16"
+                 FontWeight="400"
+                 Foreground="Black"
+                 Height="21"
+                 Margin="20 15 0 0"/>
+
+      <TextBlock Margin="20 5 0 0"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Bottom"
+                 Grid.Column="1"
+                 FontSize="16"
+                 FontWeight="400"
+                 Foreground="Black"
+                 Height="21"
+               Text="{Binding DecryptedText}"/>
+    </StackPanel>
+    
+  </Grid>
+</UserControl>
