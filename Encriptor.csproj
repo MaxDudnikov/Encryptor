@@ -29,4 +29,8 @@
   <ItemGroup>
     <Folder Include="Models\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EncoderLibrary\EncoderLibrary.csproj" />
+  </ItemGroup>
 </Project>

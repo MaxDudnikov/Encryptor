@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33424.131
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Encriptor", "Encriptor.csproj", "{D0F8EDC9-700E-4A7E-8513-0D9AA4F3ADAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Encriptor", "Encriptor.csproj", "{D0F8EDC9-700E-4A7E-8513-0D9AA4F3ADAA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EncoderLibrary", "..\EncoderLibrary\EncoderLibrary.csproj", "{C8E76F8C-0CC1-4B7F-A6DD-9B0597AAA82C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{D0F8EDC9-700E-4A7E-8513-0D9AA4F3ADAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0F8EDC9-700E-4A7E-8513-0D9AA4F3ADAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0F8EDC9-700E-4A7E-8513-0D9AA4F3ADAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8E76F8C-0CC1-4B7F-A6DD-9B0597AAA82C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8E76F8C-0CC1-4B7F-A6DD-9B0597AAA82C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8E76F8C-0CC1-4B7F-A6DD-9B0597AAA82C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8E76F8C-0CC1-4B7F-A6DD-9B0597AAA82C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
