@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace Encriptor.Views
+namespace Encryptor.Views
 {
     public partial class MainWindow : Window
     {

@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Encriptor.ViewModels;
+using Encryptor.ViewModels;
 using System;
 
-namespace Encriptor
+namespace Encryptor
 {
     public class ViewLocator : IDataTemplate
     {

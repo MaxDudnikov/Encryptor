@@ -2,7 +2,7 @@
 using System.IO;
 using System;
 
-namespace Encriptor.ViewModels
+namespace Encryptor.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {

@@ -1,7 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="using:Encriptor"
-             x:Class="Encriptor.App">
+             xmlns:local="using:Encryptor"
+             x:Class="Encryptor.App">
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>

@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Encriptor.ViewModels;
-using Encriptor.Views;
+using Encryptor.ViewModels;
+using Encryptor.Views;
 
-namespace Encriptor
+namespace Encryptor
 {
     public partial class App : Application
     {

@@ -1,6 +1,6 @@
 ﻿using ReactiveUI;
 
-namespace Encriptor.ViewModels
+namespace Encryptor.ViewModels
 {
     public class ViewModelBase : ReactiveObject
     {

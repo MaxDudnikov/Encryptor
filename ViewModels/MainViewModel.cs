@@ -1,9 +1,13 @@
-﻿using ReactiveUI;
+﻿using Avalonia.Input;
+using ReactiveUI;
+using System;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Encoder = EncoderLibrary.Encoder;
 
-namespace Encriptor.ViewModels
+namespace Encryptor.ViewModels
 {
     internal class MainViewModel : ViewModelBase
     {
@@ -16,11 +20,10 @@ namespace Encriptor.ViewModels
             get => _tte;
             set
             {
-                _tte = value;
-                if (_tte != null)
+                if (value != null)
                 {
-                    EncryptedText = encoder.GetDataEncrypt(_tte);
                     this.RaiseAndSetIfChanged(ref _tte, value);
+                    EncryptedText = encoder.GetDataEncrypt(_tte);
                 }
             }
         }
@@ -50,6 +53,30 @@ namespace Encriptor.ViewModels
         public MainViewModel()
         {
             TextToEncrypt = string.Empty;
+            Views.MainView.OnDropToEncrypt += ReadAndEncryptText;
+            Views.MainView.OnDropToDecrypt += ReadAndDecryptText;
+        }
+
+        private void ReadAndEncryptText(object? sender, DragEventArgs args)
+        {
+            string path = args.Data.GetFileNames().ToArray()[0];
+
+            if (!File.Exists(path))
+                return;
+
+            string readText = File.ReadAllText(path);
+            TextToEncrypt = readText;
+        }
+
+        private void ReadAndDecryptText(object? sender, DragEventArgs args)
+        {
+            string path = args.Data.GetFileNames().ToArray()[0];
+
+            if (!File.Exists(path))
+                return;
+
+            string readText = File.ReadAllText(path);
+            EncryptedText = readText;
         }
     }
 }

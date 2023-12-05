@@ -2,7 +2,7 @@
 using Avalonia.ReactiveUI;
 using System;
 
-namespace Encriptor
+namespace Encryptor
 {
     internal class Program
     {

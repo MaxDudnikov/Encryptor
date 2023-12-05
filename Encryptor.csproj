@@ -11,6 +11,8 @@
     <AvaloniaResource Include="Assets\**" />
     <None Remove=".gitignore" />
     <None Remove="Assets\encripted-file.png" />
+    <None Remove="Assets\security.ico" />
+    <None Remove="Assets\shield.ico" />
   </ItemGroup>
 
   <ItemGroup>

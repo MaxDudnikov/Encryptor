@@ -2,12 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="300"
-             x:Class="Encriptor.Views.MainView">
-  <Grid RowDefinitions="* * *"
-        Background="DarkGray"
-        ShowGridLines="True">
-    <StackPanel Grid.Row="0">
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="Encryptor.Views.MainView">
+  <Grid RowDefinitions="3* 2*"
+        ColumnDefinitions="* 4 *"
+        Background="#FDEED9"
+        ShowGridLines="False">
+    <Grid RowDefinitions="30 *"
+          Grid.Column="0">
       <TextBlock Text="Исходный текст"
                  HorizontalAlignment="Left"
                  VerticalAlignment="Bottom"
@@ -18,16 +20,25 @@
                  Height="21"
                  Margin="20 15 0 0"/>
 
-      <TextBox Watermark="..."
-               Margin="20 5 0 0"
-               Width="700"
-               Height="30"
-               HorizontalAlignment="Left"
-               VerticalAlignment="Bottom"
-               Text="{Binding TextToEncrypt}"/>
-    </StackPanel>
+      <TextBox Grid.Row="1"
+               Watermark="..."
+               Margin="20 5 0 5"
+               HorizontalAlignment="Stretch"
+               VerticalAlignment="Stretch"
+               Text="{Binding TextToEncrypt}"
+               DragDrop.AllowDrop="True"
+               Name="tb_ToEncrypt"
+               AcceptsReturn="True"
+               AcceptsTab="True"
+               Background="#FED6BC"/>
+    </Grid>
 
-    <StackPanel Grid.Row="1">
+    <GridSplitter Grid.Column="1"
+                  ResizeDirection="Columns"
+                  Background="Transparent"/>
+
+    <Grid RowDefinitions="30 *"
+          Grid.Column="2">
       <TextBlock Text="Зашифрованный текст"
                  HorizontalAlignment="Left"
                  VerticalAlignment="Bottom"
@@ -36,18 +47,25 @@
                  FontWeight="400"
                  Foreground="Black"
                  Height="21"
-                 Margin="20 15 0 0"/>
+                 Margin="0 15 0 0"/>
 
       <TextBox Watermark="..."
-               Margin="20 5 0 0"
-               Width="700"
-               Height="30"
-               HorizontalAlignment="Left"
-               VerticalAlignment="Bottom"
-               Text="{Binding EncryptedText}"/>
-    </StackPanel>
+               Margin="0 5 20 5"
+               VerticalAlignment="Stretch"
+               HorizontalAlignment="Stretch"
+               Text="{Binding EncryptedText}"
+               Grid.Row="1"
+               DragDrop.AllowDrop="True"
+               Name="tb_ToDecrypt"
+               AcceptsReturn="True"
+               AcceptsTab="True"
+               TextWrapping="Wrap"
+               Background="#C3FBD8"/>
+    </Grid>
 
-    <StackPanel Grid.Row="2">
+    <Grid Grid.Row="1"
+          RowDefinitions="30 *"
+          Grid.ColumnSpan="3">
       <TextBlock Text="Расшифрованный текст"
                  HorizontalAlignment="Left"
                  VerticalAlignment="Bottom"
@@ -58,16 +76,17 @@
                  Height="21"
                  Margin="20 15 0 0"/>
 
-      <TextBlock Margin="20 5 0 0"
-                 HorizontalAlignment="Left"
-                 VerticalAlignment="Bottom"
+      <TextBox Margin="20 5 20 5"
+                 HorizontalAlignment="Stretch"
+                 VerticalAlignment="Stretch"
                  Grid.Column="1"
                  FontSize="16"
                  FontWeight="400"
                  Foreground="Black"
-                 Height="21"
-               Text="{Binding DecryptedText}"/>
-    </StackPanel>
+               Background="#DEF7FE"
+               Text="{Binding DecryptedText}"
+               Grid.Row="1"/>
+    </Grid>
     
   </Grid>
 </UserControl>
