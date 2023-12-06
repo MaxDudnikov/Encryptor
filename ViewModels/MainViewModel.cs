@@ -1,6 +1,5 @@
 ﻿using Avalonia.Input;
 using ReactiveUI;
-using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;

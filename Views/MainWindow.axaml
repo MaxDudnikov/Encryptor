@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
         x:Class="Encryptor.Views.MainWindow"
         Icon="/Assets/shield.ico"
-        Title="Encryptor"
+        Title="Шифровщик"
         Width="1200"
         Height="800"
         Content="{Binding Content}">

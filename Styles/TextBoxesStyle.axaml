@@ -1,0 +1,18 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <TextBox/>
+        </Border>
+    </Design.PreviewWith>
+
+  <Style Selector="TextBox">
+    <Setter Property="Watermark" Value="..."/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="VerticalAlignment" Value="Stretch"/>
+    <Setter Property="DragDrop.AllowDrop" Value="True"/>
+    <Setter Property="AcceptsReturn" Value="True"/>
+    <Setter Property="AcceptsTab" Value="True"/>
+    <Setter Property="CornerRadius" Value="10"/>
+  </Style>
+</Styles>

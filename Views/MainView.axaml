@@ -21,15 +21,9 @@
                  Margin="20 15 0 0"/>
 
       <TextBox Grid.Row="1"
-               Watermark="..."
                Margin="20 5 0 5"
-               HorizontalAlignment="Stretch"
-               VerticalAlignment="Stretch"
                Text="{Binding TextToEncrypt}"
-               DragDrop.AllowDrop="True"
                Name="tb_ToEncrypt"
-               AcceptsReturn="True"
-               AcceptsTab="True"
                Background="#FED6BC"/>
     </Grid>
 
@@ -49,16 +43,10 @@
                  Height="21"
                  Margin="0 15 0 0"/>
 
-      <TextBox Watermark="..."
-               Margin="0 5 20 5"
-               VerticalAlignment="Stretch"
-               HorizontalAlignment="Stretch"
+      <TextBox Margin="0 5 20 5"
                Text="{Binding EncryptedText}"
                Grid.Row="1"
-               DragDrop.AllowDrop="True"
                Name="tb_ToDecrypt"
-               AcceptsReturn="True"
-               AcceptsTab="True"
                TextWrapping="Wrap"
                Background="#C3FBD8"/>
     </Grid>
@@ -77,12 +65,10 @@
                  Margin="20 15 0 0"/>
 
       <TextBox Margin="20 5 20 5"
-                 HorizontalAlignment="Stretch"
-                 VerticalAlignment="Stretch"
-                 Grid.Column="1"
-                 FontSize="16"
-                 FontWeight="400"
-                 Foreground="Black"
+               Grid.Column="1"
+               FontSize="16"
+               FontWeight="400"
+               Foreground="Black"
                Background="#DEF7FE"
                Text="{Binding DecryptedText}"
                Grid.Row="1"/>
