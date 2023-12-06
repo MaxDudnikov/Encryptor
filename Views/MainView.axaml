@@ -8,7 +8,7 @@
         ColumnDefinitions="* 4 *"
         Background="#FDEED9"
         ShowGridLines="False">
-    <Grid RowDefinitions="30 *"
+    <Grid RowDefinitions="30 * 30"
           Grid.Column="0">
       <TextBlock Text="Исходный текст"
                  HorizontalAlignment="Left"
@@ -25,6 +25,14 @@
                Text="{Binding TextToEncrypt}"
                Name="tb_ToEncrypt"
                Background="#FED6BC"/>
+      
+      <CheckBox Grid.Row="2"
+                Margin="20 0 0 0"
+                Content="Экранирование"
+                Height="30"
+                FontSize="16"
+                IsChecked="{Binding IsShielding}"
+                CornerRadius="15"/>
     </Grid>
 
     <GridSplitter Grid.Column="1"

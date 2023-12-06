@@ -1,5 +1,7 @@
-﻿using Avalonia.Input;
+﻿using Avalonia.Controls;
+using Avalonia.Input;
 using ReactiveUI;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -13,17 +15,28 @@ namespace Encryptor.ViewModels
         public new event PropertyChangedEventHandler? PropertyChanged;
 
         private Encoder encoder = new Encoder();
+
+        private string _notFormattingString = string.Empty;
         private string _tte;
         public string TextToEncrypt
         {
             get => _tte;
             set
             {
-                if (value != null)
-                {
-                    this.RaiseAndSetIfChanged(ref _tte, value);
-                    EncryptedText = encoder.GetDataEncrypt(_tte);
-                }
+                this.RaiseAndSetIfChanged(ref _tte, value);
+                ReformatString(TextToEncrypt, _notFormattingString);
+                //EncryptedText = encoder.GetDataEncrypt(_tte);
+            }
+        }
+
+        private bool isShielding;
+        public bool IsShielding
+        {
+            get => isShielding;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref isShielding, value);
+                ReformatString(TextToEncrypt, _notFormattingString);
             }
         }
 
@@ -76,6 +89,35 @@ namespace Encryptor.ViewModels
 
             string readText = File.ReadAllText(path);
             EncryptedText = readText;
+        }
+
+        private void ReformatString(string textToEncrypt, string notFormattingString)
+        {
+            string result = string.Empty;
+
+            if (IsShielding)
+            {
+                _notFormattingString = textToEncrypt;
+                textToEncrypt = textToEncrypt.Replace(@"\'", "\'");
+                textToEncrypt = textToEncrypt.Replace("\\\"", "\"");
+                textToEncrypt = textToEncrypt.Replace(@"\0", "\0");
+                textToEncrypt = textToEncrypt.Replace(@"\a", "\a");
+                textToEncrypt = textToEncrypt.Replace(@"\b", "\b");
+                textToEncrypt = textToEncrypt.Replace(@"\f", "\f");
+                textToEncrypt = textToEncrypt.Replace(@"\n", "\n");
+                textToEncrypt = textToEncrypt.Replace(@"\r", "\r");
+                textToEncrypt = textToEncrypt.Replace(@"\t", "\t");
+                textToEncrypt = textToEncrypt.Replace(@"\v", "\v");
+                textToEncrypt = textToEncrypt.Replace(@"\\", "\\");
+
+                result = textToEncrypt;
+            }
+            else
+            {
+                result = string.IsNullOrEmpty(notFormattingString) ? textToEncrypt : notFormattingString;
+            }
+
+            EncryptedText = encoder.GetDataEncrypt(result);
         }
     }
 }
