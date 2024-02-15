@@ -47,7 +47,6 @@
                Text="{Binding EncryptedText}"
                Grid.Row="1"
                Name="tb_ToDecrypt"
-               TextWrapping="Wrap"
                Background="#C3FBD8"/>
     </Grid>
 
@@ -72,6 +71,7 @@
         <StackPanel Orientation="Vertical"
                     HorizontalAlignment="Stretch">
           <CheckBox Margin="5 0 0 0"
+                    Name="cbBlockEncrypt"
                     Content="Шифрование блоками"
                     HorizontalAlignment="Left"
                     Height="30"
@@ -85,7 +85,8 @@
                     FontSize="16"
                     IsChecked="{Binding IsShielding}"
                     CornerRadius="15"/>
-          <ItemsControl Items = "{Binding Settings}">
+          <ItemsControl Items = "{Binding Settings}"
+                        IsVisible="{Binding #cbBlockEncrypt.IsChecked}">
 
             <ItemsControl.ItemTemplate>
               <DataTemplate>

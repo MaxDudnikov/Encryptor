@@ -1,21 +1,34 @@
-﻿namespace Encryptor.Models
+﻿using System.ComponentModel;
+
+namespace Encryptor.Models
 {
-    internal class Settings
+    internal class Settings : INotifyPropertyChanged
     {
         internal string Name { get; set; }
-        internal bool IsUse { get; set; }
-        internal TypeSettings TypeSettings { get; set; }
+        internal string Value { get; set; }
+        private bool isUse;
 
-        internal Settings(string name, TypeSettings typeSettings)
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        internal bool IsUse
+        {
+            get => isUse;
+            set
+            {
+                isUse = value;
+                OnPropertyChanged(Name);
+            }
+        }
+        internal Settings(string name, string value)
         {
             Name = name;
+            Value = value;
             IsUse = false;
-            TypeSettings = typeSettings;
         }
-    }
-    internal enum TypeSettings
-    {
-        Block,
-        String
     }
 }

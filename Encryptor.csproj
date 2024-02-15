@@ -34,8 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="EncoderLibrary">
-      <HintPath>..\EncoderLibrary\bin\Debug\net6.0\EncoderLibrary.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\EncoderLibrary\EncoderLibrary.csproj" />
   </ItemGroup>
 </Project>

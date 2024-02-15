@@ -3,11 +3,14 @@ using Avalonia.Input;
 using Encryptor.Models;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Encoder = EncoderLibrary.Encoder;
 
@@ -21,10 +24,9 @@ namespace Encryptor.ViewModels
 
         private string _notFormattingString = string.Empty;
 
-        private ObservableCollection<Settings> Settings { get; set; } = new();
+        private Dictionary<string, string> JsonValues = new();
 
-        private Regex regexString = new Regex(@"""(.*)"": (""|\w|\d)");
-        private Regex regexBlock = new Regex(@"""(\w*)"": {");
+        private ObservableCollection<Settings> Settings { get; set; } = new();
 
         private string _tte;
         public string TextToEncrypt
@@ -76,11 +78,6 @@ namespace Encryptor.ViewModels
             set => this.RaiseAndSetIfChanged(ref _dt, value);
         }
 
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         public MainViewModel()
         {
             TextToEncrypt = string.Empty;
@@ -102,16 +99,38 @@ namespace Encryptor.ViewModels
 
         private void ParseText(string readText)
         {
-            MatchCollection matchesString = regexString.Matches(readText);
-            MatchCollection matchesBlock = regexBlock.Matches(readText);
-            foreach (Match match in matchesString)
+            JsonValues.Clear();
+            foreach (var item in Settings)
             {
-                Settings.Add(new Settings(match.Value.Split("\"")[1], TypeSettings.String));
+                item.PropertyChanged -= Setting_PropertyChanged;
             }
-            foreach (Match match in matchesBlock)
+            Settings.Clear();
+            TryDeserialize(readText);
+        }
+
+        private void TryDeserialize(string value)
+        {
+            try
             {
-                Settings.Add(new Settings(match.Value.Split("\"")[1], TypeSettings.Block));
+                var res = JsonSerializer.Deserialize<Dictionary<string, object>>(value);
+                foreach (var item in res)
+                {
+                    JsonValues.Add(item.Key, item.Value.ToString());
+                    var setting = new Settings(item.Key, item.Value.ToString());
+                    setting.PropertyChanged += Setting_PropertyChanged;
+                    Settings.Add(setting);
+                    TryDeserialize(item.Value.ToString());
+                }
             }
+            catch (Exception ex)
+            {
+                return;
+            }
+        }
+
+        private void Setting_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            ReformatString(TextToEncrypt, _notFormattingString);
         }
 
         private void ReadAndDecryptText(object? sender, DragEventArgs args)
@@ -153,13 +172,15 @@ namespace Encryptor.ViewModels
 
             if (IsBlocking)
             {
-                var filter = Settings.Where(w => w.IsUse == true);
-                Regex tempRegex;
-
-                foreach (var filterItem in filter)
+                foreach (var item in Settings.Where(w => w.IsUse))
                 {
-                    tempRegex = new Regex(filterItem.Name);
+                    var value = item.Value.StartsWith('{') ? item.Value : $"\"{item.Value}\"";
+                    var json_old = $"\"{item.Name}\": {value}";
+                    var json_new = $"\"{item.Name}\": \"{encoder.GetDataEncrypt(item.Value)}\"";
+
+                    result = result.Replace(json_old, json_new);
                 }
+                EncryptedText = result;
             }
             if (!IsBlocking)
             {
