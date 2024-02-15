@@ -5,10 +5,10 @@
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="Encryptor.Views.MainView">
   <Grid RowDefinitions="3* 2*"
-        ColumnDefinitions="* 4 *"
+        ColumnDefinitions="* 4 * 4 .75*"
         Background="#FDEED9"
-        ShowGridLines="False">
-    <Grid RowDefinitions="30 * 30"
+        ShowGridLines="True">
+    <Grid RowDefinitions="30 *"
           Grid.Column="0">
       <TextBlock Text="Исходный текст"
                  HorizontalAlignment="Left"
@@ -25,14 +25,6 @@
                Text="{Binding TextToEncrypt}"
                Name="tb_ToEncrypt"
                Background="#FED6BC"/>
-      
-      <CheckBox Grid.Row="2"
-                Margin="20 0 0 0"
-                Content="Экранирование"
-                Height="30"
-                FontSize="16"
-                IsChecked="{Binding IsShielding}"
-                CornerRadius="15"/>
     </Grid>
 
     <GridSplitter Grid.Column="1"
@@ -51,12 +43,64 @@
                  Height="21"
                  Margin="0 15 0 0"/>
 
-      <TextBox Margin="0 5 20 5"
+      <TextBox Margin="0 5 0 5"
                Text="{Binding EncryptedText}"
                Grid.Row="1"
                Name="tb_ToDecrypt"
                TextWrapping="Wrap"
                Background="#C3FBD8"/>
+    </Grid>
+
+    <GridSplitter Grid.Column="3"
+                  ResizeDirection="Columns"
+                  Background="Transparent"/>
+
+    <Grid Grid.Column="4"
+          Grid.RowSpan="2"
+          RowDefinitions="30 *">
+      <TextBlock Text="Настройки"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Bottom"
+                 Grid.Column="1"
+                 FontSize="16"
+                 FontWeight="400"
+                 Foreground="Black"
+                 Height="21"
+                 Margin="5 15 0 0"/>
+      <ScrollViewer Grid.Row="1"
+                    Margin="0 0 0 5">
+        <StackPanel Orientation="Vertical"
+                    HorizontalAlignment="Stretch">
+          <CheckBox Margin="5 0 0 0"
+                    Content="Шифрование блоками"
+                    HorizontalAlignment="Left"
+                    Height="30"
+                    FontSize="16"
+                    IsChecked="{Binding IsBlocking}"
+                    CornerRadius="15"/>
+          <CheckBox Margin="5 0 0 0"
+                    Content="Экранирование"
+                    HorizontalAlignment="Left"
+                    Height="30"
+                    FontSize="16"
+                    IsChecked="{Binding IsShielding}"
+                    CornerRadius="15"/>
+          <ItemsControl Items = "{Binding Settings}">
+
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Orientation = "Horizontal">
+                  <CheckBox IsChecked = "{Binding IsUse}" 
+                            Margin="5 0 0 0"/>
+                  <TextBlock Text = "{Binding Name}"
+                             VerticalAlignment="Center"/>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+
+          </ItemsControl>
+        </StackPanel>
+      </ScrollViewer>
     </Grid>
 
     <Grid Grid.Row="1"

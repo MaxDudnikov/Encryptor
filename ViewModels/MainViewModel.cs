@@ -1,11 +1,14 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
 using Avalonia.Input;
+using Encryptor.Models;
 using ReactiveUI;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Encoder = EncoderLibrary.Encoder;
 
 namespace Encryptor.ViewModels
@@ -17,6 +20,12 @@ namespace Encryptor.ViewModels
         private Encoder encoder = new Encoder();
 
         private string _notFormattingString = string.Empty;
+
+        private ObservableCollection<Settings> Settings { get; set; } = new();
+
+        private Regex regexString = new Regex(@"""(.*)"": (""|\w|\d)");
+        private Regex regexBlock = new Regex(@"""(\w*)"": {");
+
         private string _tte;
         public string TextToEncrypt
         {
@@ -25,7 +34,17 @@ namespace Encryptor.ViewModels
             {
                 this.RaiseAndSetIfChanged(ref _tte, value);
                 ReformatString(TextToEncrypt, _notFormattingString);
-                //EncryptedText = encoder.GetDataEncrypt(_tte);
+            }
+        }
+        
+        private bool isBlocking;
+        public bool IsBlocking
+        {
+            get => isBlocking;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref isBlocking, value);
+                ReformatString(TextToEncrypt, _notFormattingString);
             }
         }
 
@@ -77,7 +96,22 @@ namespace Encryptor.ViewModels
                 return;
 
             string readText = File.ReadAllText(path);
+            ParseText(readText);
             TextToEncrypt = readText;
+        }
+
+        private void ParseText(string readText)
+        {
+            MatchCollection matchesString = regexString.Matches(readText);
+            MatchCollection matchesBlock = regexBlock.Matches(readText);
+            foreach (Match match in matchesString)
+            {
+                Settings.Add(new Settings(match.Value.Split("\"")[1], TypeSettings.String));
+            }
+            foreach (Match match in matchesBlock)
+            {
+                Settings.Add(new Settings(match.Value.Split("\"")[1], TypeSettings.Block));
+            }
         }
 
         private void ReadAndDecryptText(object? sender, DragEventArgs args)
@@ -98,17 +132,17 @@ namespace Encryptor.ViewModels
             if (IsShielding)
             {
                 _notFormattingString = textToEncrypt;
-                textToEncrypt = textToEncrypt.Replace(@"\'", "\'");
+                textToEncrypt = textToEncrypt.Replace("\\\'", "\'");
                 textToEncrypt = textToEncrypt.Replace("\\\"", "\"");
-                textToEncrypt = textToEncrypt.Replace(@"\0", "\0");
-                textToEncrypt = textToEncrypt.Replace(@"\a", "\a");
-                textToEncrypt = textToEncrypt.Replace(@"\b", "\b");
-                textToEncrypt = textToEncrypt.Replace(@"\f", "\f");
-                textToEncrypt = textToEncrypt.Replace(@"\n", "\n");
-                textToEncrypt = textToEncrypt.Replace(@"\r", "\r");
-                textToEncrypt = textToEncrypt.Replace(@"\t", "\t");
-                textToEncrypt = textToEncrypt.Replace(@"\v", "\v");
-                textToEncrypt = textToEncrypt.Replace(@"\\", "\\");
+                textToEncrypt = textToEncrypt.Replace("\\\0", "\0");
+                textToEncrypt = textToEncrypt.Replace("\\\a", "\a");
+                textToEncrypt = textToEncrypt.Replace("\\\b", "\b");
+                textToEncrypt = textToEncrypt.Replace("\\\f", "\f");
+                textToEncrypt = textToEncrypt.Replace("\\\n", "\n");
+                textToEncrypt = textToEncrypt.Replace("\\\r", "\r");
+                textToEncrypt = textToEncrypt.Replace("\\\t", "\t");
+                textToEncrypt = textToEncrypt.Replace("\\\v", "\v");
+                textToEncrypt = textToEncrypt.Replace("\\\\", "\\");
 
                 result = textToEncrypt;
             }
@@ -117,7 +151,20 @@ namespace Encryptor.ViewModels
                 result = string.IsNullOrEmpty(notFormattingString) ? textToEncrypt : notFormattingString;
             }
 
-            EncryptedText = encoder.GetDataEncrypt(result);
+            if (IsBlocking)
+            {
+                var filter = Settings.Where(w => w.IsUse == true);
+                Regex tempRegex;
+
+                foreach (var filterItem in filter)
+                {
+                    tempRegex = new Regex(filterItem.Name);
+                }
+            }
+            if (!IsBlocking)
+            {
+                EncryptedText = encoder.GetDataEncrypt(result);
+            }
         }
     }
 }
