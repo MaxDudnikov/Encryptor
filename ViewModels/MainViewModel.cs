@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Input;
 using Encryptor.Models;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -8,25 +9,58 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Reactive;
 using System.Runtime.CompilerServices;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Encoder = EncoderLibrary.Encoder;
 
 namespace Encryptor.ViewModels
 {
     internal class MainViewModel : ViewModelBase
     {
-        public new event PropertyChangedEventHandler? PropertyChanged;
-
-        private Encoder encoder = new Encoder();
-
-        private string _notFormattingString = string.Empty;
-
-        private Dictionary<string, string> JsonValues = new();
-
         private ObservableCollection<Settings> Settings { get; set; } = new();
+        public new event PropertyChangedEventHandler? PropertyChanged;
+        private Encoder encoder = new Encoder();
+        private string _notFormattingString = string.Empty;
+        private string filePath = string.Empty;
+        private string backup = string.Empty;
+
+        internal ReactiveCommand<Unit, Unit> OnBtnSaveClick { get; }
+        internal ReactiveCommand<Unit, Unit> OnBtnBackupClick { get; }
+
+
+        private bool _tbAnimateSuccess = false;
+        public bool tbAnimateSuccess
+        {
+            get => _tbAnimateSuccess;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _tbAnimateSuccess, value);
+            }
+        }
+        
+        private bool _tbAnimateError = false;
+        public bool tbAnimateError
+        {
+            get => _tbAnimateError;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _tbAnimateError, value);
+            }
+        }
+
+        private string _OperationError;
+        public string OperationError
+        {
+            get => _OperationError;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _OperationError, value);
+            }
+        }
 
         private string _tte;
         public string TextToEncrypt
@@ -68,9 +102,10 @@ namespace Encryptor.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _et, value);
-                DecryptedText = encoder.GetDataDecrypt(_et);
+                DecryptText(_et);
             }
         }
+
         private string _dt;
         public string DecryptedText
         {
@@ -83,23 +118,66 @@ namespace Encryptor.ViewModels
             TextToEncrypt = string.Empty;
             Views.MainView.OnDropToEncrypt += ReadAndEncryptText;
             Views.MainView.OnDropToDecrypt += ReadAndDecryptText;
+            OnBtnSaveClick = ReactiveCommand.Create(
+                () => SaveFile());
+            OnBtnBackupClick = ReactiveCommand.Create(
+                () => BackupFile());
+        }
+
+        private async void BackupFile()
+        {
+            try
+            {
+                File.WriteAllText(filePath, backup);
+                tbAnimateSuccess = true;
+                await Task.Delay(2000);
+                tbAnimateSuccess = false;
+            }
+            catch (Exception ex)
+            {
+                OperationError = ex.ToString();
+                tbAnimateError = true;
+                await Task.Delay(2000);
+                tbAnimateError = false;
+            }
+        }
+
+        private async void SaveFile()
+        {
+            try
+            {
+                File.WriteAllText(filePath, EncryptedText);
+                tbAnimateSuccess = true;
+                await Task.Delay(2000);
+                tbAnimateSuccess = false;
+            }
+            catch (Exception ex)
+            {
+                OperationError = ex.ToString();
+                tbAnimateError = true;
+                await Task.Delay(2000);
+                tbAnimateError = false;
+            }
         }
 
         private void ReadAndEncryptText(object? sender, DragEventArgs args)
         {
-            string path = args.Data.GetFileNames().ToArray()[0];
+            backup = string.Empty;
+            filePath = string.Empty;
 
-            if (!File.Exists(path))
+            filePath = args.Data.GetFileNames().ToArray()[0];
+
+            if (!File.Exists(filePath))
                 return;
 
-            string readText = File.ReadAllText(path);
+            string readText = File.ReadAllText(filePath);
+            backup = readText;
             ParseText(readText);
             TextToEncrypt = readText;
         }
 
         private void ParseText(string readText)
         {
-            JsonValues.Clear();
             foreach (var item in Settings)
             {
                 item.PropertyChanged -= Setting_PropertyChanged;
@@ -115,8 +193,7 @@ namespace Encryptor.ViewModels
                 var res = JsonSerializer.Deserialize<Dictionary<string, object>>(value);
                 foreach (var item in res)
                 {
-                    JsonValues.Add(item.Key, item.Value.ToString());
-                    var setting = new Settings(item.Key, item.Value.ToString());
+                    var setting = new Settings(item, encoder);
                     setting.PropertyChanged += Setting_PropertyChanged;
                     Settings.Add(setting);
                     TryDeserialize(item.Value.ToString());
@@ -174,9 +251,9 @@ namespace Encryptor.ViewModels
             {
                 foreach (var item in Settings.Where(w => w.IsUse))
                 {
-                    var value = item.Value.StartsWith('{') ? item.Value : $"\"{item.Value}\"";
+                    var value = GetValue(item);
                     var json_old = $"\"{item.Name}\": {value}";
-                    var json_new = $"\"{item.Name}\": \"{encoder.GetDataEncrypt(item.Value)}\"";
+                    var json_new = $"\"{item.Name}\": {item.ValueEncrypted}";
 
                     result = result.Replace(json_old, json_new);
                 }
@@ -186,6 +263,61 @@ namespace Encryptor.ViewModels
             {
                 EncryptedText = encoder.GetDataEncrypt(result);
             }
+        }
+
+        private void DecryptText(string et)
+        {
+            if (IsBlocking)
+            {
+                foreach (var item in Settings.Where(w => w.IsUse))
+                {
+                    var value = GetValue(item);
+                    var json_old = $"\"{item.Name}\": {item.ValueEncrypted}";
+                    var json_new = $"\"{item.Name}\": {value}";
+
+                    et = et.Replace(json_old, json_new);
+                }
+                DecryptedText = et;
+            }
+            if (!IsBlocking)
+            {
+                DecryptedText = encoder.GetDataDecrypt(et);
+            }
+        }
+
+        private string GetValue(Settings value)
+        {
+            string result = string.Empty;
+            switch (value.TypeValue)
+            {
+                case JsonValueKind.Undefined:
+                    result = value.Value.ToString();
+                    break;
+                case JsonValueKind.Object:
+                    result = value.Value.ToString();
+                    break;
+                case JsonValueKind.Array:
+                    result = value.Value.ToString();
+                    break;
+                case JsonValueKind.String:
+                    result = $"\"{value.Value}\"";
+                    break;
+                case JsonValueKind.Number:
+                    result = value.Value.ToString();
+                    break;
+                case JsonValueKind.True:
+                    result = value.Value.ToString().ToLower();
+                    break;
+                case JsonValueKind.False:
+                    result = value.Value.ToString().ToLower();
+                    break;
+                case JsonValueKind.Null:
+                    result = value.Value.ToString();
+                    break;
+                default:
+                    break;
+            }
+            return result;
         }
     }
 }
