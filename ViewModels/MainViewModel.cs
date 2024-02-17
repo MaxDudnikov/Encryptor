@@ -1,19 +1,15 @@
-﻿using Avalonia;
-using Avalonia.Input;
+﻿using Avalonia.Input;
 using Encryptor.Models;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive;
-using System.Runtime.CompilerServices;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Encoder = EncoderLibrary.Encoder;
 
@@ -24,12 +20,12 @@ namespace Encryptor.ViewModels
         private ObservableCollection<Settings> Settings { get; set; } = new();
         public new event PropertyChangedEventHandler? PropertyChanged;
         private Encoder encoder = new Encoder();
-        private string _notFormattingString = string.Empty;
         private string filePath = string.Empty;
         private string backup = string.Empty;
 
         internal ReactiveCommand<Unit, Unit> OnBtnSaveClick { get; }
         internal ReactiveCommand<Unit, Unit> OnBtnBackupClick { get; }
+        internal ReactiveCommand<Unit, Unit> OnBtnQuestionClick { get; }
 
 
         private bool _tbAnimateSuccess = false;
@@ -41,7 +37,7 @@ namespace Encryptor.ViewModels
                 this.RaiseAndSetIfChanged(ref _tbAnimateSuccess, value);
             }
         }
-        
+
         private bool _tbAnimateError = false;
         public bool tbAnimateError
         {
@@ -69,10 +65,10 @@ namespace Encryptor.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _tte, value);
-                ReformatString(TextToEncrypt, _notFormattingString);
+                ReformatString(TextToEncrypt);
             }
         }
-        
+
         private bool isBlocking;
         public bool IsBlocking
         {
@@ -80,7 +76,7 @@ namespace Encryptor.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref isBlocking, value);
-                ReformatString(TextToEncrypt, _notFormattingString);
+                ReformatString(TextToEncrypt);
             }
         }
 
@@ -91,7 +87,7 @@ namespace Encryptor.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref isShielding, value);
-                ReformatString(TextToEncrypt, _notFormattingString);
+                ReformatString(TextToEncrypt);
             }
         }
 
@@ -122,6 +118,25 @@ namespace Encryptor.ViewModels
                 () => SaveFile());
             OnBtnBackupClick = ReactiveCommand.Create(
                 () => BackupFile());
+            OnBtnQuestionClick = ReactiveCommand.Create(
+                () => OpenPDF());
+        }
+
+        private void OpenPDF()
+        {
+            var path = string.Empty;
+#if DEBUG
+            var catalog = Directory.GetParent(
+                Directory.GetParent(
+                    Directory.GetParent(
+                        Directory.GetCurrentDirectory())!.ToString())!.ToString())!.ToString();
+
+            path = Path.Combine(catalog, "EncryptorReference.pdf");
+#else
+            path = Path.Combine(Directory.GetCurrentDirectory(), "EncryptorReference.pdf");
+#endif
+            ProcessStartInfo startInfo = new ProcessStartInfo(path) { UseShellExecute = true };
+            Process.Start(startInfo);
         }
 
         private async void BackupFile()
@@ -207,7 +222,7 @@ namespace Encryptor.ViewModels
 
         private void Setting_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            ReformatString(TextToEncrypt, _notFormattingString);
+            ReformatString(TextToEncrypt);
         }
 
         private void ReadAndDecryptText(object? sender, DragEventArgs args)
@@ -221,30 +236,29 @@ namespace Encryptor.ViewModels
             EncryptedText = readText;
         }
 
-        private void ReformatString(string textToEncrypt, string notFormattingString)
+        private void ReformatString(string textToEncrypt)
         {
             string result = string.Empty;
 
             if (IsShielding)
             {
-                _notFormattingString = textToEncrypt;
                 textToEncrypt = textToEncrypt.Replace("\\\'", "\'");
                 textToEncrypt = textToEncrypt.Replace("\\\"", "\"");
-                textToEncrypt = textToEncrypt.Replace("\\\0", "\0");
-                textToEncrypt = textToEncrypt.Replace("\\\a", "\a");
-                textToEncrypt = textToEncrypt.Replace("\\\b", "\b");
-                textToEncrypt = textToEncrypt.Replace("\\\f", "\f");
-                textToEncrypt = textToEncrypt.Replace("\\\n", "\n");
-                textToEncrypt = textToEncrypt.Replace("\\\r", "\r");
-                textToEncrypt = textToEncrypt.Replace("\\\t", "\t");
-                textToEncrypt = textToEncrypt.Replace("\\\v", "\v");
-                textToEncrypt = textToEncrypt.Replace("\\\\", "\\");
+                textToEncrypt = textToEncrypt.Replace(@"\0", "\0");
+                textToEncrypt = textToEncrypt.Replace(@"\a", "\a");
+                textToEncrypt = textToEncrypt.Replace(@"\b", "\b");
+                textToEncrypt = textToEncrypt.Replace(@"\f", "\f");
+                textToEncrypt = textToEncrypt.Replace(@"\n", "\n");
+                textToEncrypt = textToEncrypt.Replace(@"\r", "\r");
+                textToEncrypt = textToEncrypt.Replace(@"\t", "\t");
+                textToEncrypt = textToEncrypt.Replace(@"\v", "\v");
+                textToEncrypt = textToEncrypt.Replace(@"\\", "\\");
 
                 result = textToEncrypt;
             }
             else
             {
-                result = string.IsNullOrEmpty(notFormattingString) ? textToEncrypt : notFormattingString;
+                result = textToEncrypt;
             }
 
             if (IsBlocking)
@@ -259,7 +273,7 @@ namespace Encryptor.ViewModels
                 }
                 EncryptedText = result;
             }
-            if (!IsBlocking)
+            else
             {
                 EncryptedText = encoder.GetDataEncrypt(result);
             }

@@ -12,16 +12,16 @@
     <AvaloniaResource Include="Assets\**" />
     <None Remove=".gitignore" />
     <None Remove="Assets\encripted-file.png" />
+    <None Remove="Assets\question.png" />
     <None Remove="Assets\security.ico" />
     <None Remove="Assets\shield.ico" />
+    <None Remove="Assets\Welcome РИВЦ-Пулково.pdf" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\shield.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
     <TrimmerRootDescriptor Include="Roots.xml" />
+    <Folder Include="Models\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +34,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EncoderLibrary\EncoderLibrary.csproj" />
+    <Reference Include="EncoderLibrary">
+      <HintPath>..\EncoderLibrary\bin\Debug\net6.0\EncoderLibrary.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="EncryptorReference.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

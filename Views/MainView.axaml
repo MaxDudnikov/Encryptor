@@ -7,7 +7,7 @@
   <Grid RowDefinitions="* 4 * 4 * 50"
         ColumnDefinitions="3* 4 *"
         Background="#FDEED9"
-        ShowGridLines="True">
+        ShowGridLines="False">
     <Grid RowDefinitions="30 *"
           Grid.Column="0">
       <TextBlock Text="Исходный текст"
@@ -136,6 +136,14 @@
                 HorizontalAlignment="Right"
                 Spacing="5"
                 Margin="0 0 20 0">
+      <Button Command="{Binding  OnBtnQuestionClick}"
+              CornerRadius="15"
+              Width="25"
+              Height="25">
+        <Image Source="/Assets/question.png"
+               Width="25"
+               Height="25"/>
+      </Button>
       <Button Content="Сохранить"
               Command="{Binding  OnBtnSaveClick}"/>
       <Button Content="Откатить"
@@ -145,6 +153,7 @@
     <TextBlock Text="Успешно"
                Margin="20 0 0 0"
                Foreground="Green"
+               FontWeight="Bold"
                Grid.Row="5"
                HorizontalAlignment="Left"
                VerticalAlignment="Center"
@@ -172,6 +181,7 @@
     <TextBlock Text="{Binding OperationError}"
                Margin="20 0 0 0"
                Foreground="Red"
+               FontWeight="Bold"
                Grid.Row="5"
                HorizontalAlignment="Left"
                VerticalAlignment="Center"
