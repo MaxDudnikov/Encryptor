@@ -111,21 +111,22 @@
                     FontSize="16"
                     IsChecked="{Binding IsShielding}"
                     CornerRadius="15"/>
-          <ItemsControl Items = "{Binding Settings}"
+          <Border BorderBrush="Black"
+                  BorderThickness=".5">
+            <ItemsControl Items = "{Binding Settings}"
                         IsVisible="{Binding #cbBlockEncrypt.IsChecked}">
-
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <StackPanel Orientation = "Horizontal">
-                  <CheckBox IsChecked = "{Binding IsUse}" 
-                            Margin="5 0 0 0"/>
-                  <TextBlock Text = "{Binding Name}"
-                             VerticalAlignment="Center"/>
-                </StackPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-
-          </ItemsControl>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation = "Horizontal">
+                    <CheckBox IsChecked = "{Binding IsUse}"
+                              Margin="5 0 0 0"/>
+                    <TextBlock Text = "{Binding Name}"
+                               VerticalAlignment="Center"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Border>
         </StackPanel>
       </ScrollViewer>
     </Grid>
@@ -145,9 +146,11 @@
                Height="25"/>
       </Button>
       <Button Content="Сохранить"
-              Command="{Binding  OnBtnSaveClick}"/>
+              Command="{Binding  OnBtnSaveClick}"
+              IsEnabled="{Binding IsFileExists}"/>
       <Button Content="Откатить"
-              Command="{Binding  OnBtnBackupClick}"/>
+              Command="{Binding  OnBtnBackupClick}"
+              IsEnabled="{Binding IsFileExists}"/>
     </StackPanel>
 
     <TextBlock Text="Успешно"
@@ -190,7 +193,7 @@
       <TextBlock.Styles>
         <Style Selector="TextBlock[IsVisible=true]">
           <Style.Animations>
-            <Animation Duration="0:0:1">
+            <Animation Duration="0:0:2">
               <KeyFrame Cue="0%">
                 <Setter Property="Opacity" Value="0.0"/>
               </KeyFrame>

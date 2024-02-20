@@ -27,6 +27,12 @@ namespace Encryptor.ViewModels
         internal ReactiveCommand<Unit, Unit> OnBtnBackupClick { get; }
         internal ReactiveCommand<Unit, Unit> OnBtnQuestionClick { get; }
 
+        private bool _isFileExists = false;
+        public bool IsFileExists
+        {
+            get => _isFileExists;
+            set => this.RaiseAndSetIfChanged(ref _isFileExists, value);
+        }
 
         private bool _tbAnimateSuccess = false;
         public bool tbAnimateSuccess
@@ -65,6 +71,7 @@ namespace Encryptor.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _tte, value);
+                ParseText(TextToEncrypt);
                 ReformatString(TextToEncrypt);
             }
         }
@@ -179,15 +186,16 @@ namespace Encryptor.ViewModels
         {
             backup = string.Empty;
             filePath = string.Empty;
+            IsFileExists = false;
 
             filePath = args.Data.GetFileNames().ToArray()[0];
 
             if (!File.Exists(filePath))
                 return;
 
+            IsFileExists = true;
             string readText = File.ReadAllText(filePath);
             backup = readText;
-            ParseText(readText);
             TextToEncrypt = readText;
         }
 

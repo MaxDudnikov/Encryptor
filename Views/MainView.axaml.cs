@@ -13,7 +13,7 @@ namespace Encryptor.Views
         {
             InitializeComponent();
             tb_ToEncrypt.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropToEncrypt?.Invoke(sender, args));
-            tb_ToDecrypt.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropToDecrypt?.Invoke(sender, args));
+            //tb_ToDecrypt.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropToDecrypt?.Invoke(sender, args));
         }
     }
 }
