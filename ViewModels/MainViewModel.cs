@@ -113,7 +113,7 @@ namespace Encryptor.ViewModels
         {
             TextToEncrypt = string.Empty;
             Views.MainView.OnDropToEncrypt += ReadAndEncryptText;
-            Views.MainView.OnDropToDecrypt += ReadAndDecryptText;
+            //Views.MainView.OnDropToDecrypt += ReadAndDecryptText;
             OnBtnSaveClick = ReactiveCommand.Create(
                 () => SaveFile());
             OnBtnBackupClick = ReactiveCommand.Create(
