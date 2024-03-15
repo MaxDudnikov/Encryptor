@@ -1,42 +1,114 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text.Json;
+﻿using Newtonsoft.Json.Linq;
 
 namespace Encryptor.Models
 {
-    internal class Settings : INotifyPropertyChanged
+    internal class Settings
     {
         internal string Name { get; set; }
         internal string Value { get; set; }
+        internal string ValueDecrypted { get; set; }
         internal string ValueEncrypted { get; set; }
-        internal JsonValueKind TypeValue { get; set; }
-        private bool isUse;
+        internal JTokenType JTypeValue { get; set; }
+        internal bool IsUse { get; set; }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
+        internal Settings(JProperty jProperty, EncoderLibrary.Encoder encoder)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+            Name = jProperty.Name;
+            JTypeValue = jProperty.Value.Type;
+            IsUse = false;
 
-        internal bool IsUse
-        {
-            get => isUse;
-            set
+            switch (JTypeValue)
             {
-                isUse = value;
-                OnPropertyChanged(Name);
+                case JTokenType.None:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Object:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = (encoder.GetDataDecrypt(Value) ?? Value).Replace("\r\n  ", "\r\n    ").Replace("\r\n}", "\r\n  }");
+                    ValueEncrypted = $"\"{(Value.Replace("\r\n  ", "\r\n    ").Replace("\r\n}", "\r\n  }") == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Array:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Constructor:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Property:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Comment:
+                    break;
+                case JTokenType.Integer:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Float:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.String:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = ($"\"{encoder.GetDataDecrypt(Value) ?? Value}\"").Replace("\\", @"\\");
+                    ValueEncrypted = $"\"{(($"\"{Value}\"").Replace("\\", @"\\") == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Boolean:
+                    Value = jProperty.Value.ToString().ToLower();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Null:
+                    Value = "null";
+                    ValueDecrypted = "null";
+                    ValueEncrypted = "null";
+                    break;
+                case JTokenType.Undefined:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Date:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Raw:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Bytes:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Guid:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.Uri:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                case JTokenType.TimeSpan:
+                    Value = jProperty.Value.ToString();
+                    ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+                    ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+                    break;
+                default:
+                    break;
             }
-        }
-
-        internal Settings(KeyValuePair<string, object> keyValuePair, EncoderLibrary.Encoder encoder)
-        {
-            Name = keyValuePair.Key;
-            Value = keyValuePair.Value.ToString();
-            ValueEncrypted = $"\"{encoder.GetDataEncrypt(Value)}\"";
-            isUse = false;
-            TypeValue = ((JsonElement)keyValuePair.Value).ValueKind;
         }
     }
 }

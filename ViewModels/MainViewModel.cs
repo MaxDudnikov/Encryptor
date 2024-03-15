@@ -1,5 +1,10 @@
-﻿using Avalonia.Input;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Encryptor.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -9,7 +14,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Encoder = EncoderLibrary.Encoder;
 
@@ -17,15 +21,86 @@ namespace Encryptor.ViewModels
 {
     internal class MainViewModel : ViewModelBase
     {
-        private ObservableCollection<Settings> Settings { get; set; } = new();
-        public new event PropertyChangedEventHandler? PropertyChanged;
-        private Encoder encoder = new Encoder();
-        private string filePath = string.Empty;
-        private string backup = string.Empty;
-
         internal ReactiveCommand<Unit, Unit> OnBtnSaveClick { get; }
         internal ReactiveCommand<Unit, Unit> OnBtnBackupClick { get; }
         internal ReactiveCommand<Unit, Unit> OnBtnQuestionClick { get; }
+        internal ReactiveCommand<Unit, Unit> OnClickBtnFindFile { get; }
+        internal ReactiveCommand<Unit, Unit> OnClickBtnPrepare { get; }
+        internal ReactiveCommand<Unit, Unit> OnClickBtnEncrypt { get; }
+        internal ReactiveCommand<Unit, Unit> OnClickBtnEncrypt_TEXT { get; }
+
+        public MainViewModel()
+        {
+            Views.MainView.OnDropJSON += ReadAndEncryptJSON;
+            Views.MainView.OnDropFile += ReadAndEncryptTEXT;
+            OnBtnSaveClick = ReactiveCommand.Create(
+                () => SaveFile());
+            OnBtnBackupClick = ReactiveCommand.Create(
+                () => BackupFile());
+            OnBtnQuestionClick = ReactiveCommand.Create(
+                () => OpenPDF());
+            OnClickBtnFindFile = ReactiveCommand.Create(
+                () => OpenFileButton_Click());
+            OnClickBtnPrepare = ReactiveCommand.Create(
+                () => ParseAndGetBlocks());
+            OnClickBtnEncrypt = ReactiveCommand.Create(
+                () => EncryptJSON());
+            OnClickBtnEncrypt_TEXT = ReactiveCommand.Create(
+                () => EncryptTEXT());
+        }
+
+        #region Текст
+
+        private string _original;
+        public string Original_TEXT
+        {
+            get => _original;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _original, value);
+            }
+        }
+
+        private string _et_text;
+        public string EncryptedText_TEXT
+        {
+            get => _et_text;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _et_text, value);
+            }
+        }
+
+        private void ReadAndEncryptTEXT(object? sender, DragEventArgs args)
+        {
+            var path = args.Data.GetFileNames().ToArray()[0];
+
+            if (!File.Exists(path))
+                return;
+
+            Original_TEXT = File.ReadAllText(path);
+        }
+
+        private void EncryptTEXT()
+        {
+            EncryptedText_TEXT = encoder.GetDataEncrypt(Original_TEXT);
+        }
+
+        #endregion
+
+        #region JSON
+
+        private ObservableCollection<Settings> Settings { get; set; } = new();
+        public new event PropertyChangedEventHandler? PropertyChanged;
+        private Encoder encoder = new Encoder();
+        private string backup = string.Empty;
+
+        private bool _isBtnEncryptEnabled = false;
+        public bool IsBtnEncryptEnabled
+        {
+            get => _isBtnEncryptEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isBtnEncryptEnabled, value);
+        }
 
         private bool _isFileExists = false;
         public bool IsFileExists
@@ -38,119 +113,107 @@ namespace Encryptor.ViewModels
         public bool tbAnimateSuccess
         {
             get => _tbAnimateSuccess;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _tbAnimateSuccess, value);
-            }
+            set => this.RaiseAndSetIfChanged(ref _tbAnimateSuccess, value);
         }
 
         private bool _tbAnimateError = false;
         public bool tbAnimateError
         {
             get => _tbAnimateError;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _tbAnimateError, value);
-            }
+            set => this.RaiseAndSetIfChanged(ref _tbAnimateError, value);
         }
 
         private string _OperationError;
         public string OperationError
         {
             get => _OperationError;
+            set => this.RaiseAndSetIfChanged(ref _OperationError, value);
+        }
+
+        private string _path_JSON = string.Empty;
+        public string Path_JSON
+        {
+            get => _path_JSON;
+            set => this.RaiseAndSetIfChanged(ref _path_JSON, value);
+        }
+
+        private string _dt_json;
+        public string DecryptedText_JSON
+        {
+            get => _dt_json;
             set
             {
-                this.RaiseAndSetIfChanged(ref _OperationError, value);
+                this.RaiseAndSetIfChanged(ref _dt_json, value);
+                Reset();
+            }
+        }
+        private string _et_json;
+        public string EncryptedText_JSON
+        {
+            get => _et_json;
+            set => this.RaiseAndSetIfChanged(ref _et_json, value);
+        }
+
+        private void Reset()
+        {
+            Settings.Clear();
+            IsBtnEncryptEnabled = false;
+        }
+
+        #region Подготовка к шифрованию
+        private void ParseAndGetBlocks()
+        {
+            Reset();
+            TryDeserialize(DecryptedText_JSON);
+            IsBtnEncryptEnabled = true;
+        }
+
+        private void TryDeserialize(string value)
+        {
+            try
+            {
+                var res = JsonConvert.DeserializeObject<JObject>(value);
+                var properties = res?.Properties();
+                if (properties == null)
+                    return;
+                foreach (var property in properties)
+                {
+                    var setting = new Settings(property, encoder);
+                    Settings.Add(setting);
+                    TryDeserialize(property.Value.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                return;
             }
         }
 
-        private string _tte;
-        public string TextToEncrypt
+        #endregion
+
+        #region Шифрование
+        private void EncryptJSON()
         {
-            get => _tte;
-            set
+            var temp = DecryptedText_JSON;
+
+            foreach (var item in Settings.Where(w => w.IsUse))
             {
-                this.RaiseAndSetIfChanged(ref _tte, value);
-                ParseText(TextToEncrypt);
-                ReformatString(TextToEncrypt);
+                var value = GetValue(item);
+                var json_old = $"\"{item.Name}\": {item.ValueDecrypted}";
+                var json_new = $"\"{item.Name}\": {item.ValueEncrypted}";
+                temp = temp.Replace(json_old, json_new);
             }
+
+            EncryptedText_JSON = temp;
         }
 
-        private bool isBlocking;
-        public bool IsBlocking
-        {
-            get => isBlocking;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref isBlocking, value);
-                ReformatString(TextToEncrypt);
-            }
-        }
-
-        private bool isShielding;
-        public bool IsShielding
-        {
-            get => isShielding;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref isShielding, value);
-                ReformatString(TextToEncrypt);
-            }
-        }
-
-        private string _et;
-        public string EncryptedText
-        {
-            get => _et;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _et, value);
-                DecryptText(_et);
-            }
-        }
-
-        private string _dt;
-        public string DecryptedText
-        {
-            get => _dt;
-            set => this.RaiseAndSetIfChanged(ref _dt, value);
-        }
-
-        public MainViewModel()
-        {
-            TextToEncrypt = string.Empty;
-            Views.MainView.OnDropToEncrypt += ReadAndEncryptText;
-            //Views.MainView.OnDropToDecrypt += ReadAndDecryptText;
-            OnBtnSaveClick = ReactiveCommand.Create(
-                () => SaveFile());
-            OnBtnBackupClick = ReactiveCommand.Create(
-                () => BackupFile());
-            OnBtnQuestionClick = ReactiveCommand.Create(
-                () => OpenPDF());
-        }
-
-        private void OpenPDF()
-        {
-            var path = string.Empty;
-#if DEBUG
-            var catalog = Directory.GetParent(
-                Directory.GetParent(
-                    Directory.GetParent(
-                        Directory.GetCurrentDirectory())!.ToString())!.ToString())!.ToString();
-
-            path = Path.Combine(catalog, "EncryptorReference.pdf");
-#else
-            path = Path.Combine(Directory.GetCurrentDirectory(), "EncryptorReference.pdf");
-#endif
-            ProcessStartInfo startInfo = new ProcessStartInfo(path) { UseShellExecute = true };
-            Process.Start(startInfo);
-        }
+        #endregion
 
         private async void BackupFile()
         {
             try
             {
-                File.WriteAllText(filePath, backup);
+                File.WriteAllText(Path_JSON, backup);
                 tbAnimateSuccess = true;
                 await Task.Delay(2000);
                 tbAnimateSuccess = false;
@@ -168,7 +231,7 @@ namespace Encryptor.ViewModels
         {
             try
             {
-                File.WriteAllText(filePath, EncryptedText);
+                File.WriteAllText(Path_JSON, EncryptedText_JSON);
                 tbAnimateSuccess = true;
                 await Task.Delay(2000);
                 tbAnimateSuccess = false;
@@ -182,44 +245,70 @@ namespace Encryptor.ViewModels
             }
         }
 
-        private void ReadAndEncryptText(object? sender, DragEventArgs args)
+        #region Первая обработка файла
+
+        private async void OpenFileButton_Click()
         {
             backup = string.Empty;
-            filePath = string.Empty;
+            Path_JSON = string.Empty;
             IsFileExists = false;
 
-            filePath = args.Data.GetFileNames().ToArray()[0];
+            var openFileDialog = new OpenFileDialog
+            {
+                Title = "Выберите файл для шифрования",
+                Filters = new List<FileDialogFilter>
+                {
+                    new FileDialogFilter { Name = "JSON Files", Extensions = new List<string> { "json" } }
+                }
+            };
+            var window = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
+            var result = await openFileDialog.ShowAsync(window.MainWindow);
+            if (result != null && result.Count() > 0)
+            {
+                Path_JSON = result[0];
+                IsFileExists = true;
+                string readText = File.ReadAllText(Path_JSON);
+                backup = readText;
 
-            if (!File.Exists(filePath))
+                var settings_temp = new List<Settings>();
+                DecryptText(readText, settings_temp);
+                EnterText(readText, settings_temp);
+            }
+        }
+
+        private void ReadAndEncryptJSON(object? sender, DragEventArgs args)
+        {
+            backup = string.Empty;
+            Path_JSON = string.Empty;
+            IsFileExists = false;
+
+            Path_JSON = args.Data.GetFileNames().ToArray()[0];
+
+            if (!File.Exists(Path_JSON))
                 return;
 
             IsFileExists = true;
-            string readText = File.ReadAllText(filePath);
+            string readText = File.ReadAllText(Path_JSON);
             backup = readText;
-            TextToEncrypt = readText;
+
+            var settings_temp = new List<Settings>();
+            DecryptText(readText, settings_temp);
+            EnterText(readText, settings_temp);
         }
 
-        private void ParseText(string readText)
-        {
-            foreach (var item in Settings)
-            {
-                item.PropertyChanged -= Setting_PropertyChanged;
-            }
-            Settings.Clear();
-            TryDeserialize(readText);
-        }
-
-        private void TryDeserialize(string value)
+        private void DecryptText(string readText, List<Settings> settings_temp)
         {
             try
             {
-                var res = JsonSerializer.Deserialize<Dictionary<string, object>>(value);
-                foreach (var item in res)
+                var res = JsonConvert.DeserializeObject<JObject>(readText);
+                var properties = res?.Properties();
+                if (properties == null)
+                    return;
+
+                foreach (var property in properties)
                 {
-                    var setting = new Settings(item, encoder);
-                    setting.PropertyChanged += Setting_PropertyChanged;
-                    Settings.Add(setting);
-                    TryDeserialize(item.Value.ToString());
+                    settings_temp.Add(new Settings(property, encoder));
+                    DecryptText(property.Value.ToString(), settings_temp);
                 }
             }
             catch (Exception ex)
@@ -228,118 +317,102 @@ namespace Encryptor.ViewModels
             }
         }
 
-        private void Setting_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        private void EnterText(string readText, List<Settings> settings_temp)
         {
-            ReformatString(TextToEncrypt);
+            foreach (var item in settings_temp)
+            {
+                var value = GetValue(item);
+                var json_old = $"\"{item.Name}\": {value}";
+                var json_new = $"\"{item.Name}\": {item.ValueDecrypted}";
+
+                readText = readText.Replace(json_old, json_new);
+            }
+            DecryptedText_JSON = readText;
         }
 
-        private void ReadAndDecryptText(object? sender, DragEventArgs args)
-        {
-            string path = args.Data.GetFileNames().ToArray()[0];
-
-            if (!File.Exists(path))
-                return;
-
-            string readText = File.ReadAllText(path);
-            EncryptedText = readText;
-        }
-
-        private void ReformatString(string textToEncrypt)
-        {
-            string result = string.Empty;
-
-            if (IsShielding)
-            {
-                textToEncrypt = textToEncrypt.Replace("\\\'", "\'");
-                textToEncrypt = textToEncrypt.Replace("\\\"", "\"");
-                textToEncrypt = textToEncrypt.Replace(@"\0", "\0");
-                textToEncrypt = textToEncrypt.Replace(@"\a", "\a");
-                textToEncrypt = textToEncrypt.Replace(@"\b", "\b");
-                textToEncrypt = textToEncrypt.Replace(@"\f", "\f");
-                textToEncrypt = textToEncrypt.Replace(@"\n", "\n");
-                textToEncrypt = textToEncrypt.Replace(@"\r", "\r");
-                textToEncrypt = textToEncrypt.Replace(@"\t", "\t");
-                textToEncrypt = textToEncrypt.Replace(@"\v", "\v");
-                textToEncrypt = textToEncrypt.Replace(@"\\", "\\");
-
-                result = textToEncrypt;
-            }
-            else
-            {
-                result = textToEncrypt;
-            }
-
-            if (IsBlocking)
-            {
-                foreach (var item in Settings.Where(w => w.IsUse))
-                {
-                    var value = GetValue(item);
-                    var json_old = $"\"{item.Name}\": {value}";
-                    var json_new = $"\"{item.Name}\": {item.ValueEncrypted}";
-
-                    result = result.Replace(json_old, json_new);
-                }
-                EncryptedText = result;
-            }
-            else
-            {
-                EncryptedText = encoder.GetDataEncrypt(result);
-            }
-        }
-
-        private void DecryptText(string et)
-        {
-            if (IsBlocking)
-            {
-                foreach (var item in Settings.Where(w => w.IsUse))
-                {
-                    var value = GetValue(item);
-                    var json_old = $"\"{item.Name}\": {item.ValueEncrypted}";
-                    var json_new = $"\"{item.Name}\": {value}";
-
-                    et = et.Replace(json_old, json_new);
-                }
-                DecryptedText = et;
-            }
-            if (!IsBlocking)
-            {
-                DecryptedText = encoder.GetDataDecrypt(et);
-            }
-        }
+        #endregion
 
         private string GetValue(Settings value)
         {
             string result = string.Empty;
-            switch (value.TypeValue)
+            switch (value.JTypeValue)
             {
-                case JsonValueKind.Undefined:
+                case JTokenType.None:
                     result = value.Value.ToString();
                     break;
-                case JsonValueKind.Object:
+                case JTokenType.Object:
+                    result = value.Value.ToString().Replace("\r\n  ", "\r\n    ").Replace("\r\n}", "\r\n  }");
+                    break;
+                case JTokenType.Array:
                     result = value.Value.ToString();
                     break;
-                case JsonValueKind.Array:
+                case JTokenType.Constructor:
                     result = value.Value.ToString();
                     break;
-                case JsonValueKind.String:
+                case JTokenType.Property:
+                    result = value.Value.ToString();
+                    break;
+                case JTokenType.Comment:
+                    result = value.Value.ToString();
+                    break;
+                case JTokenType.Integer:
+                    result = value.Value.ToString();
+                    break;
+                case JTokenType.Float:
+                    result = value.Value.ToString();
+                    break;
+                case JTokenType.String:
                     result = $"\"{value.Value}\"";
                     break;
-                case JsonValueKind.Number:
+                case JTokenType.Boolean:
+                    result = value.Value.ToString().ToLower();
+                    break;
+                case JTokenType.Null:
+                    result = "null";
+                    break;
+                case JTokenType.Undefined:
                     result = value.Value.ToString();
                     break;
-                case JsonValueKind.True:
-                    result = value.Value.ToString().ToLower();
+                case JTokenType.Date:
+                    result = value.Value.ToString();
                     break;
-                case JsonValueKind.False:
-                    result = value.Value.ToString().ToLower();
+                case JTokenType.Raw:
+                    result = value.Value.ToString();
                     break;
-                case JsonValueKind.Null:
+                case JTokenType.Bytes:
+                    result = value.Value.ToString();
+                    break;
+                case JTokenType.Guid:
+                    result = value.Value.ToString();
+                    break;
+                case JTokenType.Uri:
+                    result = value.Value.ToString();
+                    break;
+                case JTokenType.TimeSpan:
                     result = value.Value.ToString();
                     break;
                 default:
                     break;
             }
             return result;
+        }
+        #endregion
+
+        private void OpenPDF()
+        {
+            var path = string.Empty;
+#if DEBUG
+            var catalog = Directory.GetParent(
+                Directory.GetParent(
+                    Directory.GetParent(
+                        Directory.GetCurrentDirectory())!.ToString())!.ToString())!.ToString();
+
+            path = Path.Combine(catalog, "EncryptorReference.pdf");
+#else
+            path = Path.Combine(Directory.GetCurrentDirectory(), "EncryptorReference.pdf");
+#endif
+            ProcessStartInfo startInfo = new ProcessStartInfo(path) { UseShellExecute = true };
+            Process.Start(startInfo);
         }
     }
 }

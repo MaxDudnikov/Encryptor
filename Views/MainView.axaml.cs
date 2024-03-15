@@ -6,14 +6,14 @@ namespace Encryptor.Views
 {
     public partial class MainView : UserControl
     {
-        public static Action<object?, DragEventArgs> OnDropToEncrypt;
-        public static Action<object?, DragEventArgs> OnDropToDecrypt;
+        public static Action<object?, DragEventArgs> OnDropJSON;
+        public static Action<object?, DragEventArgs> OnDropFile;
 
         public MainView()
         {
             InitializeComponent();
-            tb_ToEncrypt.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropToEncrypt?.Invoke(sender, args));
-            //tb_ToDecrypt.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropToDecrypt?.Invoke(sender, args));
+            tb_DecryptedText_JSON.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropJSON?.Invoke(sender, args));
+            tb_Original_TEXT.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropFile?.Invoke(sender, args));
         }
     }
 }

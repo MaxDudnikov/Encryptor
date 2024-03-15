@@ -2,212 +2,295 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             mc:Ignorable="d" d:DesignWidth="1600" d:DesignHeight="800"
              x:Class="Encryptor.Views.MainView">
-  <Grid RowDefinitions="* 4 * 4 * 50"
-        ColumnDefinitions="3* 4 *"
-        Background="#FDEED9"
-        ShowGridLines="False">
-    <Grid RowDefinitions="30 *"
-          Grid.Column="0">
-      <TextBlock Text="Исходный текст"
-                 HorizontalAlignment="Left"
-                 VerticalAlignment="Bottom"
-                 Grid.Column="1"
-                 FontSize="16"
-                 FontWeight="400"
-                 Foreground="Black"
-                 Height="21"
-                 Margin="20 15 0 0"/>
+  <TabControl SelectedIndex="0">
+    <TabItem Header="JSON">
+      <Grid Background="#b5cef5"
+            ShowGridLines="False"
+            ColumnDefinitions="* 100 * 250"
+            RowDefinitions="* 50 50">
+        
+        <Grid RowDefinitions="30 *">
+          <TextBlock Text="Расшифрованный файл"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Bottom"
+                     FontSize="16"
+                     FontWeight="400"
+                     Foreground="Black"
+                     Height="21"
+                     Margin="20 15 0 0"/>
 
-      <TextBox Grid.Row="1"
-               Margin="20 5 20 5"
-               Text="{Binding TextToEncrypt}"
-               Name="tb_ToEncrypt"
-               Background="#FED6BC"/>
-    </Grid>
+          <TextBox Margin="20 5 20 5"
+                   Name="tb_DecryptedText_JSON"
+                   FontSize="14"
+                   FontWeight="400"
+                   Foreground="Black"
+                   Background="#fefefe"
+                   Text="{Binding DecryptedText_JSON}"
+                   Grid.Row="1"/>
+        </Grid>
 
-    <GridSplitter Grid.Row="1"
-                  ResizeDirection="Rows"
-                  Background="Transparent"/>
+        <Grid Grid.Column="1">
+          <StackPanel Orientation="Vertical"
+                      VerticalAlignment="Center"
+                      Spacing="16">
+            <Button Height="60"
+                    Width="60"
+                    Background="#3c90b8"
+                    HorizontalAlignment="Center"
+                    ToolTip.Tip="Выбрать файл"
+                    Command="{Binding OnClickBtnFindFile}">
+              <Image Source="/Assets/search.png"
+                     Width="40"
+                     Height="40"/>
+            </Button>
+            <Button Height="60"
+                    Width="60"
+                    Background="#3c90b8"
+                    HorizontalAlignment="Center"
+                    ToolTip.Tip="Подготовить файл к шифрованию"
+                    Command="{Binding OnClickBtnPrepare}"
+                    IsEnabled="{Binding IsFileExists}">
+              <Image Source="/Assets/planning.png"
+                     Width="40"
+                     Height="40"/>
+            </Button>
+            <Button Height="60"
+                    Width="60"
+                    Background="#3c90b8"
+                    HorizontalAlignment="Center"
+                    ToolTip.Tip="Зашифровать файл"
+                    Command="{Binding OnClickBtnEncrypt}"
+                    IsEnabled="{Binding IsBtnEncryptEnabled}">
+              <Image Source="/Assets/encryption.png"
+                     Width="40"
+                     Height="40"/>
+            </Button>
+          </StackPanel>
+        </Grid>
 
-    <Grid RowDefinitions="30 *"
-          Grid.Row="2">
-      <TextBlock Text="Зашифрованный текст"
-                 HorizontalAlignment="Left"
-                 VerticalAlignment="Bottom"
-                 Grid.Column="1"
-                 FontSize="16"
-                 FontWeight="400"
-                 Foreground="Black"
-                 Height="21"
-                 Margin="20 15 0 0"/>
+        <Grid RowDefinitions="30 *"
+               Grid.Column="2">
+          <TextBlock Text="Зашифрованный файл"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Bottom"
+                     FontSize="16"
+                     FontWeight="400"
+                     Foreground="Black"
+                     Height="21"
+                     Margin="20 15 0 0"/>
 
-      <TextBox Margin="20 5 20 5"
-               Text="{Binding EncryptedText}"
-               Grid.Row="1"
-               Name="tb_ToDecrypt"
-               Background="#C3FBD8"/>
-    </Grid>
+          <TextBox Margin="20 5 20 5"
+                   Text="{Binding EncryptedText_JSON}"
+                   Grid.Row="1"
+                   FontSize="14"
+                   FontWeight="400"
+                   Foreground="Black"
+                   Background="#fefefe"/>
+        </Grid>
 
-    <GridSplitter Grid.Row="3"
-                  ResizeDirection="Rows"
-                  Background="Transparent"/>
+        <Grid Grid.Column="3"
+              RowDefinitions="30 *"
+              MinWidth="250">
+          <TextBlock Text="Настройки"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Bottom"
+                     FontSize="16"
+                     FontWeight="400"
+                     Foreground="Black"
+                     Height="21"
+                     Margin="5 15 0 0"/>
+          <ScrollViewer Grid.Row="1"
+                        Margin="0 0 0 5">
+            <StackPanel Orientation="Vertical"
+                        HorizontalAlignment="Stretch">
+              <Border BorderBrush="Black"
+                      BorderThickness=".5">
+                <ItemsControl Items = "{Binding Settings}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <StackPanel Orientation = "Horizontal">
+                        <CheckBox IsChecked = "{Binding IsUse}"
+                                  Margin="5 0 0 0"/>
+                        <TextBlock Text = "{Binding Name}"
+                                   VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
 
-    <Grid Grid.Row="4"
-          RowDefinitions="30 *">
-      <TextBlock Text="Расшифрованный текст"
-                 HorizontalAlignment="Left"
-                 VerticalAlignment="Bottom"
-                 Grid.Column="1"
-                 FontSize="16"
-                 FontWeight="400"
-                 Foreground="Black"
-                 Height="21"
-                 Margin="20 15 0 0"/>
+        <TextBlock Text="{Binding Path_JSON}"
+                   Margin="20 0 0 0"
+                   Foreground="Black"
+                   FontSize="16"
+                   FontWeight="400"
+                   Grid.Row="1"
+                   Grid.ColumnSpan="5"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"/>
 
-      <TextBox Margin="20 5 20 5"
-               Grid.Column="1"
-               FontSize="16"
-               FontWeight="400"
-               Foreground="Black"
-               Background="#DEF7FE"
-               Text="{Binding DecryptedText}"
-               Grid.Row="1"/>
-    </Grid>
-
-    <GridSplitter Grid.Column="1"
-                  ResizeDirection="Columns"
-                  Background="Transparent"/>
-
-    <Grid Grid.Column="2"
-          Grid.RowSpan="5"
-          RowDefinitions="30 *">
-      <TextBlock Text="Настройки"
-                 HorizontalAlignment="Left"
-                 VerticalAlignment="Bottom"
-                 Grid.Column="1"
-                 FontSize="16"
-                 FontWeight="400"
-                 Foreground="Black"
-                 Height="21"
-                 Margin="5 15 0 0"/>
-      <ScrollViewer Grid.Row="1"
-                    Margin="0 0 0 5">
-        <StackPanel Orientation="Vertical"
-                    HorizontalAlignment="Stretch">
-          <CheckBox Margin="5 0 0 0"
-                    Name="cbBlockEncrypt"
-                    Content="Шифрование блоками"
-                    HorizontalAlignment="Left"
-                    Height="30"
-                    FontSize="16"
-                    IsChecked="{Binding IsBlocking}"
-                    CornerRadius="15"/>
-          <CheckBox Margin="5 0 0 0"
-                    Content="Экранирование"
-                    HorizontalAlignment="Left"
-                    Height="30"
-                    FontSize="16"
-                    IsChecked="{Binding IsShielding}"
-                    CornerRadius="15"/>
-          <Border BorderBrush="Black"
-                  BorderThickness=".5">
-            <ItemsControl Items = "{Binding Settings}"
-                        IsVisible="{Binding #cbBlockEncrypt.IsChecked}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <StackPanel Orientation = "Horizontal">
-                    <CheckBox IsChecked = "{Binding IsUse}"
-                              Margin="5 0 0 0"/>
-                    <TextBlock Text = "{Binding Name}"
-                               VerticalAlignment="Center"/>
-                  </StackPanel>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </Border>
+        <StackPanel Grid.Column="4"
+                    Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="5"
+                    Margin="0 0 20 0">
+          <Button Command="{Binding  OnBtnQuestionClick}"
+                  CornerRadius="15"
+                  Width="25"
+                  Height="25">
+            <Image Source="/Assets/question.png"
+                   Width="25"
+                   Height="25"/>
+          </Button>
+          <Button Content="Сохранить"
+                  Command="{Binding  OnBtnSaveClick}"
+                  IsEnabled="{Binding IsFileExists}"/>
+          <Button Content="Откатить"
+                  Command="{Binding  OnBtnBackupClick}"
+                  IsEnabled="{Binding IsFileExists}"/>
         </StackPanel>
-      </ScrollViewer>
-    </Grid>
 
-    <StackPanel Grid.Column="2"
-                Grid.Row="5"
-                Orientation="Horizontal"
-                HorizontalAlignment="Right"
-                Spacing="5"
-                Margin="0 0 20 0">
-      <Button Command="{Binding  OnBtnQuestionClick}"
-              CornerRadius="15"
-              Width="25"
-              Height="25">
-        <Image Source="/Assets/question.png"
-               Width="25"
-               Height="25"/>
-      </Button>
-      <Button Content="Сохранить"
-              Command="{Binding  OnBtnSaveClick}"
-              IsEnabled="{Binding IsFileExists}"/>
-      <Button Content="Откатить"
-              Command="{Binding  OnBtnBackupClick}"
-              IsEnabled="{Binding IsFileExists}"/>
-    </StackPanel>
+        <TextBlock Text="Успешно"
+                   Margin="20 0 0 0"
+                   Foreground="Green"
+                   FontWeight="Bold"
+                   Grid.Row="2"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Opacity="0"
+                   IsVisible="{Binding  tbAnimateSuccess}">
+          <TextBlock.Styles>
+            <Style Selector="TextBlock[IsVisible=true]">
+              <Style.Animations>
+                <Animation Duration="0:0:1">
+                  <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="0.0"/>
+                  </KeyFrame>
+                  <KeyFrame Cue="50%">
+                    <Setter Property="Opacity" Value="1.0"/>
+                  </KeyFrame>
+                  <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="0.0"/>
+                  </KeyFrame>
+                </Animation>
+              </Style.Animations>
+              <Setter Property="IsVisible" Value="false"/>
+            </Style>
+          </TextBlock.Styles>
+        </TextBlock>
+        <TextBlock Text="{Binding OperationError}"
+                   Margin="20 0 0 0"
+                   Foreground="Red"
+                   FontWeight="Bold"
+                   Grid.Row="2"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Opacity="0"
+                   IsVisible="{Binding  tbAnimateError}">
+          <TextBlock.Styles>
+            <Style Selector="TextBlock[IsVisible=true]">
+              <Style.Animations>
+                <Animation Duration="0:0:2">
+                  <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="0.0"/>
+                  </KeyFrame>
+                  <KeyFrame Cue="50%">
+                    <Setter Property="Opacity" Value="1.0"/>
+                  </KeyFrame>
+                  <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="0.0"/>
+                  </KeyFrame>
+                </Animation>
+              </Style.Animations>
+              <Setter Property="IsVisible" Value="false"/>
+            </Style>
+          </TextBlock.Styles>
+        </TextBlock>
+      </Grid>
+    </TabItem>
+    <TabItem Header="Текст">
+      <Grid Background="#b5cef5"
+            ShowGridLines="False"
+            ColumnDefinitions="* 100 *"
+            RowDefinitions="* 50">
+        <Grid RowDefinitions="30 *">
+          <TextBlock Text="Исходный текст"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Bottom"
+                     FontSize="16"
+                     FontWeight="400"
+                     Foreground="Black"
+                     Height="21"
+                     Margin="20 15 0 0"/>
 
-    <TextBlock Text="Успешно"
-               Margin="20 0 0 0"
-               Foreground="Green"
-               FontWeight="Bold"
-               Grid.Row="5"
-               HorizontalAlignment="Left"
-               VerticalAlignment="Center"
-               Opacity="0"
-               IsVisible="{Binding  tbAnimateSuccess}">
-      <TextBlock.Styles>
-        <Style Selector="TextBlock[IsVisible=true]">
-          <Style.Animations>
-            <Animation Duration="0:0:1">
-              <KeyFrame Cue="0%">
-                <Setter Property="Opacity" Value="0.0"/>
-              </KeyFrame>
-              <KeyFrame Cue="50%">
-                <Setter Property="Opacity" Value="1.0"/>
-              </KeyFrame>
-              <KeyFrame Cue="100%">
-                <Setter Property="Opacity" Value="0.0"/>
-              </KeyFrame>
-            </Animation>
-          </Style.Animations>
-          <Setter Property="IsVisible" Value="false"/>
-        </Style>
-      </TextBlock.Styles>
-    </TextBlock>
-    <TextBlock Text="{Binding OperationError}"
-               Margin="20 0 0 0"
-               Foreground="Red"
-               FontWeight="Bold"
-               Grid.Row="5"
-               HorizontalAlignment="Left"
-               VerticalAlignment="Center"
-               Opacity="0"
-               IsVisible="{Binding  tbAnimateError}">
-      <TextBlock.Styles>
-        <Style Selector="TextBlock[IsVisible=true]">
-          <Style.Animations>
-            <Animation Duration="0:0:2">
-              <KeyFrame Cue="0%">
-                <Setter Property="Opacity" Value="0.0"/>
-              </KeyFrame>
-              <KeyFrame Cue="50%">
-                <Setter Property="Opacity" Value="1.0"/>
-              </KeyFrame>
-              <KeyFrame Cue="100%">
-                <Setter Property="Opacity" Value="0.0"/>
-              </KeyFrame>
-            </Animation>
-          </Style.Animations>
-          <Setter Property="IsVisible" Value="false"/>
-        </Style>
-      </TextBlock.Styles>
-    </TextBlock>
-  </Grid>
+          <TextBox Margin="20 5 20 5"
+                   Name="tb_Original_TEXT"
+                   FontSize="14"
+                   FontWeight="400"
+                   Foreground="Black"
+                   Background="#fefefe"
+                   Text="{Binding Original_TEXT}"
+                   Grid.Row="1"/>
+        </Grid>
+
+        <StackPanel Grid.Column="1"
+                    Orientation="Vertical"
+                    VerticalAlignment="Center"
+                    Spacing="16">
+          <Button Height="60"
+                  Width="60"
+                  Background="#3c90b8"
+                  HorizontalAlignment="Center"
+                  ToolTip.Tip="Зашифровать текст"
+                  Command="{Binding OnClickBtnEncrypt_TEXT}">
+            <Image Source="/Assets/encryption.png"
+                     Width="40"
+                     Height="40"/>
+          </Button>
+        </StackPanel>
+
+        <Grid RowDefinitions="30 *"
+               Grid.Column="2">
+          <TextBlock Text="Зашифрованный текст"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Bottom"
+                     FontSize="16"
+                     FontWeight="400"
+                     Foreground="Black"
+                     Height="21"
+                     Margin="20 15 0 0"/>
+
+          <TextBox Margin="20 5 20 5"
+                   FontSize="14"
+                   FontWeight="400"
+                   Foreground="Black"
+                   Text="{Binding EncryptedText_TEXT}"
+                   Grid.Row="1"
+                   Background="#fefefe"/>
+        </Grid>
+
+        <StackPanel Grid.Column="2"
+                    Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="5"
+                    Margin="0 0 20 0">
+          <Button Command="{Binding  OnBtnQuestionClick}"
+                  CornerRadius="15"
+                  Width="25"
+                  Height="25">
+            <Image Source="/Assets/question.png"
+                   Width="25"
+                   Height="25"/>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </TabItem>
+  </TabControl>
 </UserControl>

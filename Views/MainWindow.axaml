@@ -3,11 +3,13 @@
         xmlns:vm="using:Encryptor.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+        mc:Ignorable="d" d:DesignWidth="1600" d:DesignHeight="800"
         x:Class="Encryptor.Views.MainWindow"
         Icon="/Assets/shield.ico"
         Title="Шифровщик"
-        Width="1200"
+        Width="1600"
+        MinWidth="950"
         Height="800"
+        MinHeight="400"
         Content="{Binding Content}">
 </Window>

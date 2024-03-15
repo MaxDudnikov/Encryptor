@@ -1,6 +1,4 @@
 ﻿using ReactiveUI;
-using System.IO;
-using System;
 
 namespace Encryptor.ViewModels
 {

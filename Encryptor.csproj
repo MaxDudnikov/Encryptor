@@ -5,34 +5,34 @@
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Assets\shield.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
     <None Remove=".gitignore" />
-    <None Remove="Assets\encripted-file.png" />
-    <None Remove="Assets\question.png" />
-    <None Remove="Assets\security.ico" />
-    <None Remove="Assets\shield.ico" />
-    <None Remove="Assets\Welcome РИВЦ-Пулково.pdf" />
+    <None Remove="Assets\encryption.png" />
+    <None Remove="Assets\planning.png" />
+    <None Remove="Assets\search.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\shield.ico" />
     <TrimmerRootDescriptor Include="Roots.xml" />
-    <Folder Include="Models\" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="0.10.18" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+    <PackageReference Include="Avalonia" Version="11.0.0-preview4" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.0-preview4" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.18" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.0-preview4" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.0-preview4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="XamlNameReferenceGenerator" Version="1.5.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EncoderLibrary\EncoderLibrary.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="EncoderLibrary">
       <HintPath>..\EncoderLibrary\bin\Debug\net6.0\EncoderLibrary.dll</HintPath>
