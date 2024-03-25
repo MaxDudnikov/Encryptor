@@ -22,12 +22,12 @@
                      Margin="20 15 0 0"/>
 
           <TextBox Margin="20 5 20 5"
-                   Name="tb_DecryptedText_JSON"
+                   Name="tb_DecryptedText_FILE"
                    FontSize="14"
                    FontWeight="400"
                    Foreground="Black"
                    Background="#fefefe"
-                   Text="{Binding DecryptedText_JSON}"
+                   Text="{Binding DecryptedText_FILE}"
                    Grid.Row="1"/>
         </Grid>
 
@@ -91,7 +91,7 @@
                      Margin="20 15 0 0"/>
 
           <TextBox Margin="20 5 20 5"
-                   Text="{Binding EncryptedText_JSON}"
+                   Text="{Binding EncryptedText_FILE}"
                    Grid.Row="1"
                    FontSize="14"
                    FontWeight="400"

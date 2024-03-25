@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Encryptor.Models;
@@ -147,21 +148,21 @@ namespace Encryptor.ViewModels
             set => this.RaiseAndSetIfChanged(ref _path_JSON, value);
         }
 
-        private string _dt_json;
-        public string DecryptedText_JSON
+        private string _dt_file;
+        public string DecryptedText_FILE
         {
-            get => _dt_json;
+            get => _dt_file;
             set
             {
-                this.RaiseAndSetIfChanged(ref _dt_json, value);
+                this.RaiseAndSetIfChanged(ref _dt_file, value);
                 Reset();
             }
         }
-        private string _et_json;
-        public string EncryptedText_JSON
+        private string _et_file;
+        public string EncryptedText_FILE
         {
-            get => _et_json;
-            set => this.RaiseAndSetIfChanged(ref _et_json, value);
+            get => _et_file;
+            set => this.RaiseAndSetIfChanged(ref _et_file, value);
         }
 
         private void Reset()
@@ -255,7 +256,7 @@ namespace Encryptor.ViewModels
                         string line;
                         while ((line = streamReader.ReadLine()) != null)
                         {
-                            line.Trim();
+                            line = line.Trim();
                             if (!string.IsNullOrWhiteSpace(line) && !line.StartsWith(";") && !(line.StartsWith("[") && line.EndsWith("]")))
                             {
                                 string[] parts = line.Split('=');
@@ -281,17 +282,14 @@ namespace Encryptor.ViewModels
                         var value = GetValue(item);
                         var json_old = $"\"{item.Name}\": {value}";
                         var json_new = $"\"{item.Name}\": {item.ValueDecrypted}";
-
                         readText = readText.Replace(json_old, json_new);
                     }
                     break;
                 case eFileExtensions.INI:
                     foreach (var item in settings_temp)
                     {
-                        var value = GetValue(item);
-                        var ini_old = $"{item.Name}={value}";
+                        var ini_old = $"{item.Name}={item.Value}";
                         var ini_new = $"{item.Name}={item.ValueDecrypted}";
-
                         readText = readText.Replace(ini_old, ini_new);
                     }
                     break;
@@ -300,7 +298,7 @@ namespace Encryptor.ViewModels
                 default:
                     break;
             }
-            DecryptedText_JSON = readText;
+            DecryptedText_FILE = readText;
         }
 
         #endregion
@@ -309,7 +307,7 @@ namespace Encryptor.ViewModels
         private void ParseAndGetBlocks()
         {
             Reset();
-            TryDeserialize(DecryptedText_JSON, Settings);
+            TryDeserialize(DecryptedText_FILE, Settings);
             IsBtnEncryptEnabled = true;
         }
 
@@ -318,17 +316,33 @@ namespace Encryptor.ViewModels
         #region Шифрование
         private void EncryptJSON()
         {
-            var temp = DecryptedText_JSON;
+            var temp = DecryptedText_FILE;
 
-            foreach (var item in Settings.Where(w => w.IsUse))
+            switch (currentFileExtension)
             {
-                var value = GetValue(item);
-                var json_old = $"\"{item.Name}\": {item.ValueDecrypted}";
-                var json_new = $"\"{item.Name}\": {item.ValueEncrypted}";
-                temp = temp.Replace(json_old, json_new);
+                case eFileExtensions.JSON:
+                    foreach (var item in Settings.Where(w => w.IsUse))
+                    {
+                        var value = GetValue(item);
+                        var json_old = $"\"{item.Name}\": {item.ValueDecrypted}";
+                        var json_new = $"\"{item.Name}\": {item.ValueEncrypted}";
+                        temp = temp.Replace(json_old, json_new);
+                    }
+                    break;
+                case eFileExtensions.INI:
+                    foreach (var item in Settings.Where(w => w.IsUse))
+                    {
+                        var ini_old = $"{item.Name}={item.ValueDecrypted}";
+                        var ini_new = $"{item.Name}={item.ValueEncrypted}";
+                        temp = temp.Replace(ini_old, ini_new);
+                    }
+                    break;
+                case eFileExtensions.NONE:
+                    break;
+                default:
+                    break;
             }
-
-            EncryptedText_JSON = temp;
+            EncryptedText_FILE = temp;
         }
 
         #endregion
@@ -355,7 +369,7 @@ namespace Encryptor.ViewModels
         {
             try
             {
-                File.WriteAllText(Path_FILE, EncryptedText_JSON);
+                File.WriteAllText(Path_FILE, EncryptedText_FILE);
                 tbAnimateSuccess = true;
                 await Task.Delay(2000);
                 tbAnimateSuccess = false;

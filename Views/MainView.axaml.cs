@@ -12,7 +12,7 @@ namespace Encryptor.Views
         public MainView()
         {
             InitializeComponent();
-            tb_DecryptedText_JSON.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropJSON?.Invoke(sender, args));
+            tb_DecryptedText_FILE.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropJSON?.Invoke(sender, args));
             tb_Original_TEXT.AddHandler(DragDrop.DropEvent, (sender, args) => OnDropFile?.Invoke(sender, args));
         }
     }
