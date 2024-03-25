@@ -1,8 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Controls.Documents;
-using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Encryptor.Models;
 using Newtonsoft.Json;
@@ -11,7 +9,6 @@ using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -101,7 +98,6 @@ namespace Encryptor.ViewModels
         #region FILE
 
         private ObservableCollection<Settings> Settings { get; set; } = new();
-        public new event PropertyChangedEventHandler? PropertyChanged;
         private Encoder encoder = new Encoder();
         private string backup = string.Empty;
         private eFileExtensions currentFileExtension = eFileExtensions.NONE;
@@ -175,6 +171,7 @@ namespace Encryptor.ViewModels
 
         private async void OpenFileButton_Click()
         {
+            var window = (IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!;
             var openFileDialog = new OpenFileDialog
             {
                 Title = "Выберите файл для шифрования",
@@ -185,8 +182,7 @@ namespace Encryptor.ViewModels
                     new FileDialogFilter { Name = "All Files", Extensions = new List<string> { "*" } }
                 }
             };
-            var window = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
-            var result = await openFileDialog.ShowAsync(window.MainWindow);
+            var result = await openFileDialog.ShowAsync(window!.MainWindow!);
 
             if (result == null || result.Count() == 0)
             {
@@ -194,14 +190,14 @@ namespace Encryptor.ViewModels
                 Path_FILE = string.Empty;
                 IsFileExists = false;
             }
-            Path_FILE = result[0];
+            Path_FILE = result![0];
 
             ParseFile();
         }
 
         private void ReadAndEncryptJSON(object? sender, DragEventArgs args)
         {
-            Path_FILE = args.Data.GetFileNames().ToArray()[0];
+            Path_FILE = args.Data.GetFileNames()!.ToArray()[0];
 
             if (!File.Exists(Path_FILE))
             {
@@ -221,7 +217,7 @@ namespace Encryptor.ViewModels
             backup = readText;
 
             var settings_temp = new List<Settings>();
-            currentFileExtension = System.IO.Path.GetExtension(Path_FILE).GetExtension();
+            currentFileExtension = Path.GetExtension(Path_FILE).GetExtension();
 
             TryDeserialize(readText, settings_temp);
             EnterText(readText, settings_temp);
@@ -245,7 +241,7 @@ namespace Encryptor.ViewModels
                             TryDeserialize(property.Value.ToString(), settings_temp);
                         }
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         return;
                     }
@@ -253,7 +249,7 @@ namespace Encryptor.ViewModels
                 case eFileExtensions.INI:
                     using (var streamReader = new StringReader(readText))
                     {
-                        string line;
+                        string? line;
                         while ((line = streamReader.ReadLine()) != null)
                         {
                             line = line.Trim();
@@ -458,7 +454,7 @@ namespace Encryptor.ViewModels
                     Directory.GetParent(
                         Directory.GetCurrentDirectory())!.ToString())!.ToString())!.ToString();
 
-            path = System.IO.Path.Combine(catalog, "EncryptorReference.pdf");
+            path = Path.Combine(catalog, "EncryptorReference.pdf");
 #else
             path = Path.Combine(Directory.GetCurrentDirectory(), "EncryptorReference.pdf");
 #endif
