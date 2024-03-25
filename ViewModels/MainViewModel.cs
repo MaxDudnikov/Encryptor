@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Encryptor.Models;
 using Newtonsoft.Json;
@@ -28,6 +29,7 @@ namespace Encryptor.ViewModels
         internal ReactiveCommand<Unit, Unit> OnClickBtnPrepare { get; }
         internal ReactiveCommand<Unit, Unit> OnClickBtnEncrypt { get; }
         internal ReactiveCommand<Unit, Unit> OnClickBtnEncrypt_TEXT { get; }
+        internal ReactiveCommand<Unit, Unit> OnClickBtnDecrypt_TEXT { get; }
 
         public MainViewModel()
         {
@@ -47,6 +49,8 @@ namespace Encryptor.ViewModels
                 () => EncryptJSON());
             OnClickBtnEncrypt_TEXT = ReactiveCommand.Create(
                 () => EncryptTEXT());
+            OnClickBtnDecrypt_TEXT = ReactiveCommand.Create(
+                () => DecryptTEXT());
         }
 
         #region Текст
@@ -61,13 +65,13 @@ namespace Encryptor.ViewModels
             }
         }
 
-        private string _et_text;
-        public string EncryptedText_TEXT
+        private string _result_text;
+        public string Result_TEXT
         {
-            get => _et_text;
+            get => _result_text;
             set
             {
-                this.RaiseAndSetIfChanged(ref _et_text, value);
+                this.RaiseAndSetIfChanged(ref _result_text, value);
             }
         }
 
@@ -83,17 +87,23 @@ namespace Encryptor.ViewModels
 
         private void EncryptTEXT()
         {
-            EncryptedText_TEXT = encoder.GetDataEncrypt(Original_TEXT);
+            Result_TEXT = encoder.GetDataEncrypt(Original_TEXT);
+        }
+
+        private void DecryptTEXT()
+        {
+            Result_TEXT = encoder.GetDataDecrypt(Original_TEXT) ?? Original_TEXT;
         }
 
         #endregion
 
-        #region JSON
+        #region FILE
 
         private ObservableCollection<Settings> Settings { get; set; } = new();
         public new event PropertyChangedEventHandler? PropertyChanged;
         private Encoder encoder = new Encoder();
         private string backup = string.Empty;
+        private eFileExtensions currentFileExtension = eFileExtensions.NONE;
 
         private bool _isBtnEncryptEnabled = false;
         public bool IsBtnEncryptEnabled
@@ -131,7 +141,7 @@ namespace Encryptor.ViewModels
         }
 
         private string _path_JSON = string.Empty;
-        public string Path_JSON
+        public string Path_FILE
         {
             get => _path_JSON;
             set => this.RaiseAndSetIfChanged(ref _path_JSON, value);
@@ -160,33 +170,147 @@ namespace Encryptor.ViewModels
             IsBtnEncryptEnabled = false;
         }
 
+        #region Первая обработка файла
+
+        private async void OpenFileButton_Click()
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Title = "Выберите файл для шифрования",
+                Filters = new List<FileDialogFilter>
+                {
+                    new FileDialogFilter { Name = "JSON Files", Extensions = new List<string> { "json" } },
+                    new FileDialogFilter { Name = "Ini Files", Extensions = new List<string> { "ini" } },
+                    new FileDialogFilter { Name = "All Files", Extensions = new List<string> { "*" } }
+                }
+            };
+            var window = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
+            var result = await openFileDialog.ShowAsync(window.MainWindow);
+
+            if (result == null || result.Count() == 0)
+            {
+                backup = string.Empty;
+                Path_FILE = string.Empty;
+                IsFileExists = false;
+            }
+            Path_FILE = result[0];
+
+            ParseFile();
+        }
+
+        private void ReadAndEncryptJSON(object? sender, DragEventArgs args)
+        {
+            Path_FILE = args.Data.GetFileNames().ToArray()[0];
+
+            if (!File.Exists(Path_FILE))
+            {
+                backup = string.Empty;
+                Path_FILE = string.Empty;
+                IsFileExists = false;
+                return;
+            }
+
+            ParseFile();
+        }
+
+        private void ParseFile()
+        {
+            IsFileExists = true;
+            string readText = File.ReadAllText(Path_FILE);
+            backup = readText;
+
+            var settings_temp = new List<Settings>();
+            currentFileExtension = System.IO.Path.GetExtension(Path_FILE).GetExtension();
+
+            TryDeserialize(readText, settings_temp);
+            EnterText(readText, settings_temp);
+        }
+
+        private void TryDeserialize(string readText, IList<Settings> settings_temp)
+        {
+            switch (currentFileExtension)
+            {
+                case eFileExtensions.JSON:
+                    try
+                    {
+                        var res = JsonConvert.DeserializeObject<JObject>(readText);
+                        var properties = res?.Properties();
+                        if (properties == null)
+                            return;
+
+                        foreach (var property in properties)
+                        {
+                            settings_temp.Add(new Settings(property, encoder));
+                            TryDeserialize(property.Value.ToString(), settings_temp);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return;
+                    }
+                    break;
+                case eFileExtensions.INI:
+                    using (var streamReader = new StringReader(readText))
+                    {
+                        string line;
+                        while ((line = streamReader.ReadLine()) != null)
+                        {
+                            line.Trim();
+                            if (!string.IsNullOrWhiteSpace(line) && !line.StartsWith(";") && !(line.StartsWith("[") && line.EndsWith("]")))
+                            {
+                                string[] parts = line.Split('=');
+                                settings_temp.Add(new Settings(parts[0].Trim(), parts.Length > 1 ? parts[1].Trim() : string.Empty, encoder));
+                            }
+                        }
+                    }
+                    break;
+                case eFileExtensions.NONE:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void EnterText(string readText, List<Settings> settings_temp)
+        {
+            switch (currentFileExtension)
+            {
+                case eFileExtensions.JSON:
+                    foreach (var item in settings_temp)
+                    {
+                        var value = GetValue(item);
+                        var json_old = $"\"{item.Name}\": {value}";
+                        var json_new = $"\"{item.Name}\": {item.ValueDecrypted}";
+
+                        readText = readText.Replace(json_old, json_new);
+                    }
+                    break;
+                case eFileExtensions.INI:
+                    foreach (var item in settings_temp)
+                    {
+                        var value = GetValue(item);
+                        var ini_old = $"{item.Name}={value}";
+                        var ini_new = $"{item.Name}={item.ValueDecrypted}";
+
+                        readText = readText.Replace(ini_old, ini_new);
+                    }
+                    break;
+                case eFileExtensions.NONE:
+                    break;
+                default:
+                    break;
+            }
+            DecryptedText_JSON = readText;
+        }
+
+        #endregion
+
         #region Подготовка к шифрованию
         private void ParseAndGetBlocks()
         {
             Reset();
-            TryDeserialize(DecryptedText_JSON);
+            TryDeserialize(DecryptedText_JSON, Settings);
             IsBtnEncryptEnabled = true;
-        }
-
-        private void TryDeserialize(string value)
-        {
-            try
-            {
-                var res = JsonConvert.DeserializeObject<JObject>(value);
-                var properties = res?.Properties();
-                if (properties == null)
-                    return;
-                foreach (var property in properties)
-                {
-                    var setting = new Settings(property, encoder);
-                    Settings.Add(setting);
-                    TryDeserialize(property.Value.ToString());
-                }
-            }
-            catch (Exception ex)
-            {
-                return;
-            }
         }
 
         #endregion
@@ -213,7 +337,7 @@ namespace Encryptor.ViewModels
         {
             try
             {
-                File.WriteAllText(Path_JSON, backup);
+                File.WriteAllText(Path_FILE, backup);
                 tbAnimateSuccess = true;
                 await Task.Delay(2000);
                 tbAnimateSuccess = false;
@@ -231,7 +355,7 @@ namespace Encryptor.ViewModels
         {
             try
             {
-                File.WriteAllText(Path_JSON, EncryptedText_JSON);
+                File.WriteAllText(Path_FILE, EncryptedText_JSON);
                 tbAnimateSuccess = true;
                 await Task.Delay(2000);
                 tbAnimateSuccess = false;
@@ -244,93 +368,6 @@ namespace Encryptor.ViewModels
                 tbAnimateError = false;
             }
         }
-
-        #region Первая обработка файла
-
-        private async void OpenFileButton_Click()
-        {
-            backup = string.Empty;
-            Path_JSON = string.Empty;
-            IsFileExists = false;
-
-            var openFileDialog = new OpenFileDialog
-            {
-                Title = "Выберите файл для шифрования",
-                Filters = new List<FileDialogFilter>
-                {
-                    new FileDialogFilter { Name = "JSON Files", Extensions = new List<string> { "json" } }
-                }
-            };
-            var window = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
-            var result = await openFileDialog.ShowAsync(window.MainWindow);
-            if (result != null && result.Count() > 0)
-            {
-                Path_JSON = result[0];
-                IsFileExists = true;
-                string readText = File.ReadAllText(Path_JSON);
-                backup = readText;
-
-                var settings_temp = new List<Settings>();
-                DecryptText(readText, settings_temp);
-                EnterText(readText, settings_temp);
-            }
-        }
-
-        private void ReadAndEncryptJSON(object? sender, DragEventArgs args)
-        {
-            backup = string.Empty;
-            Path_JSON = string.Empty;
-            IsFileExists = false;
-
-            Path_JSON = args.Data.GetFileNames().ToArray()[0];
-
-            if (!File.Exists(Path_JSON))
-                return;
-
-            IsFileExists = true;
-            string readText = File.ReadAllText(Path_JSON);
-            backup = readText;
-
-            var settings_temp = new List<Settings>();
-            DecryptText(readText, settings_temp);
-            EnterText(readText, settings_temp);
-        }
-
-        private void DecryptText(string readText, List<Settings> settings_temp)
-        {
-            try
-            {
-                var res = JsonConvert.DeserializeObject<JObject>(readText);
-                var properties = res?.Properties();
-                if (properties == null)
-                    return;
-
-                foreach (var property in properties)
-                {
-                    settings_temp.Add(new Settings(property, encoder));
-                    DecryptText(property.Value.ToString(), settings_temp);
-                }
-            }
-            catch (Exception ex)
-            {
-                return;
-            }
-        }
-
-        private void EnterText(string readText, List<Settings> settings_temp)
-        {
-            foreach (var item in settings_temp)
-            {
-                var value = GetValue(item);
-                var json_old = $"\"{item.Name}\": {value}";
-                var json_new = $"\"{item.Name}\": {item.ValueDecrypted}";
-
-                readText = readText.Replace(json_old, json_new);
-            }
-            DecryptedText_JSON = readText;
-        }
-
-        #endregion
 
         private string GetValue(Settings value)
         {
@@ -407,7 +444,7 @@ namespace Encryptor.ViewModels
                     Directory.GetParent(
                         Directory.GetCurrentDirectory())!.ToString())!.ToString())!.ToString();
 
-            path = Path.Combine(catalog, "EncryptorReference.pdf");
+            path = System.IO.Path.Combine(catalog, "EncryptorReference.pdf");
 #else
             path = Path.Combine(Directory.GetCurrentDirectory(), "EncryptorReference.pdf");
 #endif

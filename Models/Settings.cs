@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace Encryptor.Models
 {
@@ -109,6 +110,15 @@ namespace Encryptor.Models
                 default:
                     break;
             }
+        }
+
+        internal Settings(string key, string value, EncoderLibrary.Encoder encoder)
+        {
+            Name = key;
+            Value = value;
+            ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
+            ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+            IsUse = false;
         }
     }
 }

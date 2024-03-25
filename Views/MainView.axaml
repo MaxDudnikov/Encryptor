@@ -45,28 +45,37 @@
                      Width="40"
                      Height="40"/>
             </Button>
-            <Button Height="60"
+            <Border ToolTip.Tip="Подготовить файл к шифрованию"
+                    Background="Transparent"
+                    Height="60"
+                    Width="60">
+              <Button Height="60"
                     Width="60"
                     Background="#3c90b8"
                     HorizontalAlignment="Center"
-                    ToolTip.Tip="Подготовить файл к шифрованию"
                     Command="{Binding OnClickBtnPrepare}"
                     IsEnabled="{Binding IsFileExists}">
-              <Image Source="/Assets/planning.png"
-                     Width="40"
-                     Height="40"/>
-            </Button>
-            <Button Height="60"
-                    Width="60"
-                    Background="#3c90b8"
-                    HorizontalAlignment="Center"
-                    ToolTip.Tip="Зашифровать файл"
-                    Command="{Binding OnClickBtnEncrypt}"
-                    IsEnabled="{Binding IsBtnEncryptEnabled}">
-              <Image Source="/Assets/encryption.png"
-                     Width="40"
-                     Height="40"/>
-            </Button>
+                <Image Source="/Assets/planning.png"
+                       Width="40"
+                       Height="40"/>
+              </Button>
+            </Border>
+
+            <Border ToolTip.Tip="Зашифровать файл"
+                    Background="Transparent"
+                    Height="60"
+                    Width="60">
+              <Button Height="60"
+                      Width="60"
+                      Background="#3c90b8"
+                      HorizontalAlignment="Center"
+                      Command="{Binding OnClickBtnEncrypt}"
+                      IsEnabled="{Binding IsBtnEncryptEnabled}">
+                <Image Source="/Assets/encryption.png"
+                       Width="40"
+                       Height="40"/>
+              </Button>
+            </Border>
           </StackPanel>
         </Grid>
 
@@ -124,7 +133,7 @@
           </ScrollViewer>
         </Grid>
 
-        <TextBlock Text="{Binding Path_JSON}"
+        <TextBlock Text="{Binding Path_FILE}"
                    Margin="20 0 0 0"
                    Foreground="Black"
                    FontSize="16"
@@ -253,11 +262,22 @@
                      Width="40"
                      Height="40"/>
           </Button>
+
+          <Button Height="60"
+                  Width="60"
+                  Background="#3c90b8"
+                  HorizontalAlignment="Center"
+                  ToolTip.Tip="Расшифровать текст"
+                  Command="{Binding OnClickBtnDecrypt_TEXT}">
+            <Image Source="/Assets/decrypt.png"
+                     Width="40"
+                     Height="40"/>
+          </Button>
         </StackPanel>
 
         <Grid RowDefinitions="30 *"
                Grid.Column="2">
-          <TextBlock Text="Зашифрованный текст"
+          <TextBlock Text="Результат"
                      HorizontalAlignment="Left"
                      VerticalAlignment="Bottom"
                      FontSize="16"
@@ -270,7 +290,7 @@
                    FontSize="14"
                    FontWeight="400"
                    Foreground="Black"
-                   Text="{Binding EncryptedText_TEXT}"
+                   Text="{Binding Result_TEXT}"
                    Grid.Row="1"
                    Background="#fefefe"/>
         </Grid>
