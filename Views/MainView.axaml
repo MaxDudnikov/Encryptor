@@ -5,7 +5,7 @@
              mc:Ignorable="d" d:DesignWidth="1600" d:DesignHeight="800"
              x:Class="Encryptor.Views.MainView">
   <TabControl SelectedIndex="0">
-    <TabItem Header="JSON">
+    <TabItem Header="Файл">
       <Grid Background="#b5cef5"
             ShowGridLines="False"
             ColumnDefinitions="* 100 * 250"

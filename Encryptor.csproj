@@ -31,10 +31,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="XamlNameReferenceGenerator" Version="1.5.1" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\EncoderLibrary\EncoderLibrary.csproj" />
-  </ItemGroup>
   <ItemGroup>
     <Reference Include="EncoderLibrary">
       <HintPath>..\EncoderLibrary\bin\Debug\net6.0\EncoderLibrary.dll</HintPath>
