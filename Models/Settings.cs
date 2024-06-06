@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Encryptor.Models
 {
-    internal class Settings
+    public class Settings
     {
         internal string Name { get; set; }
         internal string Value { get; set; }

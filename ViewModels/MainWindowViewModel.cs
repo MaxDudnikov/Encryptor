@@ -4,12 +4,8 @@ namespace Encryptor.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        internal MainWindowViewModel()
-        {
-            Content = new MainViewModel();
-        }
-
-        private ViewModelBase content;
+        internal MainWindowViewModel(){}
+        private ViewModelBase content = new MainViewModel();
         internal ViewModelBase Content
         {
             get => content;

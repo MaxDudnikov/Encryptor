@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using Encryptor.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -32,8 +33,8 @@ namespace Encryptor.ViewModels
 
         public MainViewModel()
         {
-            Views.MainView.OnDropJSON += ReadAndEncryptJSON;
-            Views.MainView.OnDropFile += ReadAndEncryptTEXT;
+            Views.MainView.OnDrop_FileTab += GetInfoFromDropedFile;
+            Views.MainView.OnDropFile_TextTab += ReadAndEncryptTEXT;
             OnBtnSaveClick = ReactiveCommand.Create(
                 () => SaveFile());
             OnBtnBackupClick = ReactiveCommand.Create(
@@ -99,9 +100,9 @@ namespace Encryptor.ViewModels
         #region FILE
 
         private ObservableCollection<Settings> Settings { get; set; } = new();
-        private Encoder encoder = new Encoder();
+        private readonly Encoder encoder = new();
         private string backup = string.Empty;
-        private eFileExtensions currentFileExtension = eFileExtensions.NONE;
+        private EFileExtensions currentFileExtension = EFileExtensions.NONE;
 
         private bool _isBtnEncryptEnabled = false;
         public bool IsBtnEncryptEnabled
@@ -118,14 +119,14 @@ namespace Encryptor.ViewModels
         }
 
         private bool _tbAnimateSuccess = false;
-        public bool tbAnimateSuccess
+        public bool TbAnimateSuccess
         {
             get => _tbAnimateSuccess;
             set => this.RaiseAndSetIfChanged(ref _tbAnimateSuccess, value);
         }
 
         private bool _tbAnimateError = false;
-        public bool tbAnimateError
+        public bool TbAnimateError
         {
             get => _tbAnimateError;
             set => this.RaiseAndSetIfChanged(ref _tbAnimateError, value);
@@ -173,32 +174,22 @@ namespace Encryptor.ViewModels
         private async void OpenFileButton_Click()
         {
             var window = (IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!;
-            var openFileDialog = new OpenFileDialog
-            {
-                Title = "Выберите файл для шифрования",
-                Filters = new List<FileDialogFilter>
-                {
-                    new FileDialogFilter { Name = "JSON Files", Extensions = new List<string> { "json" } },
-                    new FileDialogFilter { Name = "Ini Files", Extensions = new List<string> { "ini" } },
-                    new FileDialogFilter { Name = "XML Files", Extensions = new List<string> { "xml" } },
-                    new FileDialogFilter { Name = "Config Files", Extensions = new List<string> { "config" } },
-                    new FileDialogFilter { Name = "All Files", Extensions = new List<string> { "*" } }
-                }
-            };
-            var result = await openFileDialog.ShowAsync(window!.MainWindow!);
+            var storageProvider = window.MainWindow!.StorageProvider;
+            var fileOpenPicker = await storageProvider.OpenFilePickerAsync(FileExtensions.filePickerOpenOptions);
 
-            if (result == null || result.Length == 0)
+            if (fileOpenPicker == null || fileOpenPicker.Count == 0 || !fileOpenPicker[0].TryGetUri(out var uri))
             {
                 backup = string.Empty;
                 Path_FILE = string.Empty;
                 IsFileExists = false;
+                return;
             }
-            Path_FILE = result![0];
 
+            Path_FILE = uri.LocalPath;
             ParseFile();
         }
 
-        private void ReadAndEncryptJSON(object? sender, DragEventArgs args)
+        private void GetInfoFromDropedFile(object? sender, DragEventArgs args)
         {
             Path_FILE = args.Data.GetFileNames()!.ToArray()[0];
 
@@ -223,108 +214,19 @@ namespace Encryptor.ViewModels
             currentFileExtension = Path.GetExtension(Path_FILE).GetExtension();
 
             TryDeserialize(readText, settings_temp);
-            EnterText(readText, settings_temp);
+            FillDecryptedTextBox(readText, settings_temp);
         }
 
         private void TryDeserialize(string readText, IList<Settings> settings_temp)
         {
-            switch (currentFileExtension)
-            {
-                case eFileExtensions.JSON:
-                    try
-                    {
-                        var res = JsonConvert.DeserializeObject<JObject>(readText);
-                        var properties = res?.Properties();
-                        if (properties == null)
-                            return;
-
-                        foreach (var property in properties)
-                        {
-                            settings_temp.Add(new Settings(property, encoder));
-                            TryDeserialize(property.Value.ToString(), settings_temp);
-                        }
-                    }
-                    catch
-                    {
-                        return;
-                    }
-                    break;
-                case eFileExtensions.INI:
-                    using (var streamReader = new StringReader(readText))
-                    {
-                        string? line;
-                        while ((line = streamReader.ReadLine()) != null)
-                        {
-                            line = line.Trim();
-                            if (!string.IsNullOrWhiteSpace(line) && !line.StartsWith(";") && !(line.StartsWith("[") && line.EndsWith("]")))
-                            {
-                                string[] parts = line.Split('=');
-                                settings_temp.Add(new Settings(parts[0].Trim(), parts.Length > 1 ? parts[1].Trim() : string.Empty, encoder));
-                            }
-                        }
-                    }
-                    break;
-                case eFileExtensions.XML:
-                    try
-                    {
-                        var xdoc = XDocument.Parse(readText);
-                        foreach (var element in xdoc.Descendants("add"))
-                        {
-                            var key = element.Attribute("name")?.Value;
-                            var value = element.Attribute("connectionString")?.Value;
-
-                            if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
-                            {
-                                settings_temp.Add(new Settings(key, value, encoder));
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        return;
-                    }
-                    break;
-                case eFileExtensions.NONE:
-                    break;
-                default:
-                    break;
-            }
+            var handler = DeserializeFactory.GetHandler(currentFileExtension);
+            handler.Handle(settings_temp, readText, encoder);
         }
 
-        private void EnterText(string readText, List<Settings> settings_temp)
+        private void FillDecryptedTextBox(string readText, List<Settings> settings_temp)
         {
-            switch (currentFileExtension)
-            {
-                case eFileExtensions.JSON:
-                    foreach (var item in settings_temp)
-                    {
-                        var value = GetValue(item);
-                        var json_old = $"\"{item.Name}\": {value}";
-                        var json_new = $"\"{item.Name}\": {item.ValueDecrypted}";
-                        readText = readText.Replace(json_old, json_new);
-                    }
-                    break;
-                case eFileExtensions.INI:
-                    foreach (var item in settings_temp)
-                    {
-                        var ini_old = $"{item.Name}={item.Value}";
-                        var ini_new = $"{item.Name}={item.ValueDecrypted}";
-                        readText = readText.Replace(ini_old, ini_new);
-                    }
-                    break;
-                case eFileExtensions.XML:
-                    foreach (var item in settings_temp)
-                    {
-                        var xml_old = $"name=\"{item.Name}\" connectionString=\"{item.Value}\"";
-                        var xml_new = $"name=\"{item.Name}\" connectionString=\"{item.ValueDecrypted}\"";
-                        readText = readText.Replace(xml_old, xml_new);
-                    }
-                    break;
-                case eFileExtensions.NONE:
-                    break;
-                default:
-                    break;
-            }
+            var handler = FileHandlerFactory.GetHandler(currentFileExtension);
+            handler.Handle(settings_temp, ref readText);
             DecryptedText_FILE = readText;
         }
 
@@ -347,16 +249,16 @@ namespace Encryptor.ViewModels
 
             switch (currentFileExtension)
             {
-                case eFileExtensions.JSON:
+                case EFileExtensions.JSON:
                     foreach (var item in Settings.Where(w => w.IsUse))
                     {
-                        var value = GetValue(item);
+                        var value = item.GetValue();
                         var json_old = $"\"{item.Name}\": {item.ValueDecrypted}";
                         var json_new = $"\"{item.Name}\": {item.ValueEncrypted}";
                         temp = temp.Replace(json_old, json_new);
                     }
                     break;
-                case eFileExtensions.INI:
+                case EFileExtensions.INI:
                     foreach (var item in Settings.Where(w => w.IsUse))
                     {
                         var ini_old = $"{item.Name}={item.ValueDecrypted}";
@@ -364,7 +266,7 @@ namespace Encryptor.ViewModels
                         temp = temp.Replace(ini_old, ini_new);
                     }
                     break;
-                case eFileExtensions.XML:
+                case EFileExtensions.CONFIG:
                     foreach (var item in Settings.Where(w => w.IsUse))
                     {
                         var xml_old = $"name=\"{item.Name}\" connectionString=\"{item.ValueDecrypted}\"";
@@ -372,7 +274,7 @@ namespace Encryptor.ViewModels
                         temp = temp.Replace(xml_old, xml_new);
                     }
                     break;
-                case eFileExtensions.NONE:
+                case EFileExtensions.NONE:
                     break;
                 default:
                     break;
@@ -382,105 +284,32 @@ namespace Encryptor.ViewModels
 
         #endregion
 
-        private async void BackupFile()
+        private void BackupFile()
+        {
+            ReWriteFile(backup);
+        }
+
+        private void SaveFile()
+        {
+            ReWriteFile(EncryptedText_FILE);
+        }
+
+        private async void ReWriteFile(string textFile)
         {
             try
             {
-                File.WriteAllText(Path_FILE, backup);
-                tbAnimateSuccess = true;
+                File.WriteAllText(Path_FILE, textFile);
+                TbAnimateSuccess = true;
                 await Task.Delay(2000);
-                tbAnimateSuccess = false;
+                TbAnimateSuccess = false;
             }
             catch (Exception ex)
             {
                 OperationError = ex.ToString();
-                tbAnimateError = true;
+                TbAnimateError = true;
                 await Task.Delay(2000);
-                tbAnimateError = false;
+                TbAnimateError = false;
             }
-        }
-
-        private async void SaveFile()
-        {
-            try
-            {
-                File.WriteAllText(Path_FILE, EncryptedText_FILE);
-                tbAnimateSuccess = true;
-                await Task.Delay(2000);
-                tbAnimateSuccess = false;
-            }
-            catch (Exception ex)
-            {
-                OperationError = ex.ToString();
-                tbAnimateError = true;
-                await Task.Delay(2000);
-                tbAnimateError = false;
-            }
-        }
-
-        private string GetValue(Settings value)
-        {
-            string result = string.Empty;
-            switch (value.JTypeValue)
-            {
-                case JTokenType.None:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Object:
-                    result = value.Value.ToString().Replace("\r\n  ", "\r\n    ").Replace("\r\n}", "\r\n  }");
-                    break;
-                case JTokenType.Array:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Constructor:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Property:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Comment:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Integer:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Float:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.String:
-                    result = $"\"{value.Value}\"";
-                    break;
-                case JTokenType.Boolean:
-                    result = value.Value.ToString().ToLower();
-                    break;
-                case JTokenType.Null:
-                    result = "null";
-                    break;
-                case JTokenType.Undefined:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Date:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Raw:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Bytes:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Guid:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.Uri:
-                    result = value.Value.ToString();
-                    break;
-                case JTokenType.TimeSpan:
-                    result = value.Value.ToString();
-                    break;
-                default:
-                    break;
-            }
-            return result;
         }
         #endregion
 
@@ -497,7 +326,7 @@ namespace Encryptor.ViewModels
 #else
             path = Path.Combine(Directory.GetCurrentDirectory(), "EncryptorReference.pdf");
 #endif
-            ProcessStartInfo startInfo = new ProcessStartInfo(path) { UseShellExecute = true };
+            ProcessStartInfo startInfo = new(path) { UseShellExecute = true };
             Process.Start(startInfo);
         }
     }
