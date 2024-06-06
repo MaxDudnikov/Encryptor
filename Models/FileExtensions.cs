@@ -8,6 +8,8 @@
             {
                 ".json" => eFileExtensions.JSON,
                 ".ini" => eFileExtensions.INI,
+                ".xml" => eFileExtensions.XML,
+                ".config" => eFileExtensions.XML,
                 _ => eFileExtensions.NONE
             };
         }
@@ -17,6 +19,7 @@
     {
         JSON,
         INI,
+        XML,
         NONE
     }
 }

@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Encoder = EncoderLibrary.Encoder;
 
 namespace Encryptor.ViewModels
@@ -44,7 +45,7 @@ namespace Encryptor.ViewModels
             OnClickBtnPrepare = ReactiveCommand.Create(
                 () => ParseAndGetBlocks());
             OnClickBtnEncrypt = ReactiveCommand.Create(
-                () => EncryptJSON());
+                () => EncryptFILE());
             OnClickBtnEncrypt_TEXT = ReactiveCommand.Create(
                 () => EncryptTEXT());
             OnClickBtnDecrypt_TEXT = ReactiveCommand.Create(
@@ -53,7 +54,7 @@ namespace Encryptor.ViewModels
 
         #region Текст
 
-        private string _original;
+        private string _original = string.Empty;
         public string Original_TEXT
         {
             get => _original;
@@ -63,7 +64,7 @@ namespace Encryptor.ViewModels
             }
         }
 
-        private string _result_text;
+        private string _result_text = string.Empty;
         public string Result_TEXT
         {
             get => _result_text;
@@ -75,7 +76,7 @@ namespace Encryptor.ViewModels
 
         private void ReadAndEncryptTEXT(object? sender, DragEventArgs args)
         {
-            var path = args.Data.GetFileNames().ToArray()[0];
+            var path = args.Data.GetFileNames()?.ToArray()[0];
 
             if (!File.Exists(path))
                 return;
@@ -130,7 +131,7 @@ namespace Encryptor.ViewModels
             set => this.RaiseAndSetIfChanged(ref _tbAnimateError, value);
         }
 
-        private string _OperationError;
+        private string _OperationError = string.Empty;
         public string OperationError
         {
             get => _OperationError;
@@ -144,7 +145,7 @@ namespace Encryptor.ViewModels
             set => this.RaiseAndSetIfChanged(ref _path_JSON, value);
         }
 
-        private string _dt_file;
+        private string _dt_file = string.Empty;
         public string DecryptedText_FILE
         {
             get => _dt_file;
@@ -154,7 +155,7 @@ namespace Encryptor.ViewModels
                 Reset();
             }
         }
-        private string _et_file;
+        private string _et_file = string.Empty;
         public string EncryptedText_FILE
         {
             get => _et_file;
@@ -179,12 +180,14 @@ namespace Encryptor.ViewModels
                 {
                     new FileDialogFilter { Name = "JSON Files", Extensions = new List<string> { "json" } },
                     new FileDialogFilter { Name = "Ini Files", Extensions = new List<string> { "ini" } },
+                    new FileDialogFilter { Name = "XML Files", Extensions = new List<string> { "xml" } },
+                    new FileDialogFilter { Name = "Config Files", Extensions = new List<string> { "config" } },
                     new FileDialogFilter { Name = "All Files", Extensions = new List<string> { "*" } }
                 }
             };
             var result = await openFileDialog.ShowAsync(window!.MainWindow!);
 
-            if (result == null || result.Count() == 0)
+            if (result == null || result.Length == 0)
             {
                 backup = string.Empty;
                 Path_FILE = string.Empty;
@@ -261,6 +264,26 @@ namespace Encryptor.ViewModels
                         }
                     }
                     break;
+                case eFileExtensions.XML:
+                    try
+                    {
+                        var xdoc = XDocument.Parse(readText);
+                        foreach (var element in xdoc.Descendants("add"))
+                        {
+                            var key = element.Attribute("name")?.Value;
+                            var value = element.Attribute("connectionString")?.Value;
+
+                            if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
+                            {
+                                settings_temp.Add(new Settings(key, value, encoder));
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        return;
+                    }
+                    break;
                 case eFileExtensions.NONE:
                     break;
                 default:
@@ -289,6 +312,14 @@ namespace Encryptor.ViewModels
                         readText = readText.Replace(ini_old, ini_new);
                     }
                     break;
+                case eFileExtensions.XML:
+                    foreach (var item in settings_temp)
+                    {
+                        var xml_old = $"name=\"{item.Name}\" connectionString=\"{item.Value}\"";
+                        var xml_new = $"name=\"{item.Name}\" connectionString=\"{item.ValueDecrypted}\"";
+                        readText = readText.Replace(xml_old, xml_new);
+                    }
+                    break;
                 case eFileExtensions.NONE:
                     break;
                 default:
@@ -310,7 +341,7 @@ namespace Encryptor.ViewModels
         #endregion
 
         #region Шифрование
-        private void EncryptJSON()
+        private void EncryptFILE()
         {
             var temp = DecryptedText_FILE;
 
@@ -331,6 +362,14 @@ namespace Encryptor.ViewModels
                         var ini_old = $"{item.Name}={item.ValueDecrypted}";
                         var ini_new = $"{item.Name}={item.ValueEncrypted}";
                         temp = temp.Replace(ini_old, ini_new);
+                    }
+                    break;
+                case eFileExtensions.XML:
+                    foreach (var item in Settings.Where(w => w.IsUse))
+                    {
+                        var xml_old = $"name=\"{item.Name}\" connectionString=\"{item.ValueDecrypted}\"";
+                        var xml_new = $"name=\"{item.Name}\" connectionString={item.ValueEncrypted}";
+                        temp = temp.Replace(xml_old, xml_new);
                     }
                     break;
                 case eFileExtensions.NONE:
