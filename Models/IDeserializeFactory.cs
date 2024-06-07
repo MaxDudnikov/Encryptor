@@ -65,7 +65,7 @@ public class INI_Deserialize : IDeserializeFactory
                 if (!string.IsNullOrWhiteSpace(line) && !line.StartsWith(";") && !(line.StartsWith("[") && line.EndsWith("]")))
                 {
                     string[] parts = line.Split('=');
-                    settings.Add(new Settings(parts[0].Trim(), parts.Length > 1 ? parts[1].Trim() : string.Empty, encoder));
+                    settings.Add(new Settings(parts[0].Trim(), parts.Length > 1 ? parts[1].Trim() : string.Empty, encoder, "\"{0}\""));
                 }
             }
         }

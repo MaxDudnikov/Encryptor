@@ -167,6 +167,7 @@ namespace Encryptor.ViewModels
         {
             Settings.Clear();
             IsBtnEncryptEnabled = false;
+            EncryptedText_FILE = string.Empty;
         }
 
         #region Первая обработка файла
@@ -226,7 +227,7 @@ namespace Encryptor.ViewModels
         private void FillDecryptedTextBox(string readText, List<Settings> settings_temp)
         {
             var handler = FileHandlerFactory.GetHandler(currentFileExtension);
-            handler.Handle(settings_temp, ref readText);
+            handler.Handle_Decrypt(settings_temp, ref readText);
             DecryptedText_FILE = readText;
         }
 
@@ -246,39 +247,8 @@ namespace Encryptor.ViewModels
         private void EncryptFILE()
         {
             var temp = DecryptedText_FILE;
-
-            switch (currentFileExtension)
-            {
-                case EFileExtensions.JSON:
-                    foreach (var item in Settings.Where(w => w.IsUse))
-                    {
-                        var value = item.GetValue();
-                        var json_old = $"\"{item.Name}\": {item.ValueDecrypted}";
-                        var json_new = $"\"{item.Name}\": {item.ValueEncrypted}";
-                        temp = temp.Replace(json_old, json_new);
-                    }
-                    break;
-                case EFileExtensions.INI:
-                    foreach (var item in Settings.Where(w => w.IsUse))
-                    {
-                        var ini_old = $"{item.Name}={item.ValueDecrypted}";
-                        var ini_new = $"{item.Name}={item.ValueEncrypted}";
-                        temp = temp.Replace(ini_old, ini_new);
-                    }
-                    break;
-                case EFileExtensions.CONFIG:
-                    foreach (var item in Settings.Where(w => w.IsUse))
-                    {
-                        var xml_old = $"name=\"{item.Name}\" connectionString=\"{item.ValueDecrypted}\"";
-                        var xml_new = $"name=\"{item.Name}\" connectionString={item.ValueEncrypted}";
-                        temp = temp.Replace(xml_old, xml_new);
-                    }
-                    break;
-                case EFileExtensions.NONE:
-                    break;
-                default:
-                    break;
-            }
+            var handler = FileHandlerFactory.GetHandler(currentFileExtension);
+            handler.Handle_Encrypt(Settings, ref temp);
             EncryptedText_FILE = temp;
         }
 

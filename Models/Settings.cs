@@ -1,14 +1,13 @@
 ﻿using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace Encryptor.Models
 {
     public class Settings
     {
-        internal string Name { get; set; }
-        internal string Value { get; set; }
-        internal string ValueDecrypted { get; set; }
-        internal string ValueEncrypted { get; set; }
+        internal string Name { get; set; } = string.Empty;
+        internal string Value { get; set; } = string.Empty;
+        internal string ValueDecrypted { get; set; } = string.Empty;
+        internal string ValueEncrypted { get; set; } = string.Empty;
         internal JTokenType JTypeValue { get; set; }
         internal bool IsUse { get; set; }
 
@@ -112,12 +111,14 @@ namespace Encryptor.Models
             }
         }
 
-        internal Settings(string key, string value, EncoderLibrary.Encoder encoder)
+        internal Settings(string key, string value, EncoderLibrary.Encoder encoder, string? format = null)
         {
             Name = key;
             Value = value;
             ValueDecrypted = encoder.GetDataDecrypt(Value) ?? Value;
-            ValueEncrypted = $"\"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}\"";
+            ValueEncrypted = format == null ?
+                $"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}" :
+                string.Format(format, $"{(Value == ValueDecrypted ? encoder.GetDataEncrypt(Value) : Value)}");
             IsUse = false;
         }
     }

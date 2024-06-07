@@ -31,6 +31,10 @@ namespace Encryptor.Models
                 new("config")
                 {
                     Patterns = new List<string>() { "*.config"}
+                },
+                new("All")
+                {
+                    Patterns = new List<string>() {"*"}
                 }
             }
         };
